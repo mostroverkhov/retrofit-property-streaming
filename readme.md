@@ -24,7 +24,7 @@ Given service created as follows
 
     service = retrofit.create(MockService.class);
 
-for service definition. ```Prop<T>``` model parameter type T is mandatory
+for service definition. ```Prop<T>``` type parameter T for model is mandatory
 
     public interface MockService {
         @GET("/{id}")
