@@ -1,0 +1,18 @@
+{
+  "id": 20284864,
+  "name": "Simplistic-RSS",
+  "owner": {
+    "login": null,
+    "id": 3848588
+  },
+  "items": [
+    {
+      "name": "name1",
+      "val": true
+    },
+    {
+      "name": "name2",
+      "val": true
+    }
+  ]
+}
