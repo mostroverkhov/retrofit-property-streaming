@@ -1,12 +1,13 @@
-Backpressured [rxjava](https://github.com/ReactiveX/RxJava) streaming support for [retrofit](https://square.github.io/retrofit/) with json payload as events of model's properties.
+Backpressured [rxjava](https://github.com/ReactiveX/RxJava) streaming support for [retrofit](https://square.github.io/retrofit/) as events of model properties.  
 
+Json payloads only 
 
 Supported property types:
 
-**property** - non-list property
-**arr_property** - item of list property
-**arr_start** - start of list property notification, contains property name
-**arr_end** - end of list property notification, contains property name
+**property** - non-list property  
+**arr_property** - item of json array property  
+**arr_start** - start of json array notification, contains property name  
+**arr_end** - end of of json array notification, contains property name  
 
 ###Limitations
 binding for properties and array contents only
@@ -14,7 +15,7 @@ supported java types for json array: ```java.util.List```
 
 ###How to use
 
-Given service created as follows
+Given that retrofit created as
 
     Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("base_url")
@@ -22,10 +23,10 @@ Given service created as follows
                 .addConverterFactory(PropertyStreamConverterFactory.create())
                 .build();
 
+with service definition (note that in ```Prop<T>```, parameter T for model type is mandatory)
+
     service = retrofit.create(MockService.class);
-
-for service definition. ```Prop<T>``` type parameter T for model is mandatory
-
+    
     public interface MockService {
         @GET("/{id}")
         Observable<Prop<MockResponse>> mockResponse(@Path("id") String id);
@@ -51,7 +52,7 @@ and model
         }
     }
 
- calling
+ Subscription
 
      service.mockResponse("42").subscribe(new Subscriber<Prop<TestModels.MockResponse>>() {
                 @Override
