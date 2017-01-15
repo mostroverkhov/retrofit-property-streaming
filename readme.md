@@ -82,8 +82,9 @@ Prop{propTypes=[ARR_START], name='items', value=null}
 Prop{propTypes=[ARR_PROPERTY], name='items', value=Item{name='name1', val=true}}
 Prop{propTypes=[ARR_PROPERTY], name='items', value=Item{name='name2', val=true}}
 Prop{propTypes=[ARR_END], name='items', value=null}
- ```
- ###Artifacts
+ ```  
+ 
+###Artifacts
 
  Binaries are available on jitpack
 
