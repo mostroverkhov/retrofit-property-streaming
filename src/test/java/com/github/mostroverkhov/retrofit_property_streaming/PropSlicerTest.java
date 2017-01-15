@@ -1,6 +1,5 @@
-package com.retro_rx_streaming;
+package com.github.mostroverkhov.retrofit_property_streaming;
 
-import com.github.mostroverkhov.retrofit_property_streaming.PropertySlicer;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.github.mostroverkhov.retrofit_property_streaming.model.Prop;
@@ -11,9 +10,8 @@ import org.junit.Test;
 
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
-import static com.retro_rx_streaming.TestModels.MockResponse;
-import static com.retro_rx_streaming.TestModels.MockResponseShort;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -26,7 +24,6 @@ public class PropSlicerTest {
 
     @Before
     public void setUp() throws Exception {
-
         InputStreamReader reader = new InputStreamReader(
                 getClass().getClassLoader().getResourceAsStream("mock_response.json"),
                 "UTF-8");
@@ -45,9 +42,14 @@ public class PropSlicerTest {
     @Test
     public void propertyCalculatorAllFields() throws Exception {
 
-        PropertySlicer<MockResponse> calc = new PropertySlicer<>(MockResponse.class, gson, jsonReader);
-        ArrayList<Prop<TestModels.MockResponse>> props = new ArrayList<>();
+        PropertySlicer<TestModels.MockResponse> calc = new PropertySlicer<>(
+                TestModels.MockResponse.class,
+                gson,
+                jsonReader);
+
+        List<Prop<TestModels.MockResponse>> props = new ArrayList<>();
         Prop<TestModels.MockResponse> prop = calc.nextProp();
+
         while (prop != null) {
             props.add(prop);
             prop = calc.nextProp();
@@ -65,8 +67,11 @@ public class PropSlicerTest {
     @Test
     public void propertyCalculatorSkipFields() throws Exception {
 
-        PropertySlicer<TestModels.MockResponseShort> calc = new PropertySlicer<>(MockResponseShort.class, gson, jsonReader);
-        ArrayList<Prop<TestModels.MockResponseShort>> props = new ArrayList<>();
+        PropertySlicer<TestModels.MockResponseShort> calc = new PropertySlicer<>(
+                TestModels.MockResponseShort.class,
+                gson,
+                jsonReader);
+        List<Prop<TestModels.MockResponseShort>> props = new ArrayList<>();
         Prop<TestModels.MockResponseShort> prop = calc.nextProp();
         while (prop != null) {
             props.add(prop);

@@ -5,5 +5,8 @@ package com.github.mostroverkhov.retrofit_property_streaming.model;
  */
 public enum PropType {
 
-    PROPERTY, ARR_PROPERTY, ARR_START, ARR_END
+    PROPERTY,
+    ARR_PROPERTY,
+    ARR_START,
+    ARR_END
 }

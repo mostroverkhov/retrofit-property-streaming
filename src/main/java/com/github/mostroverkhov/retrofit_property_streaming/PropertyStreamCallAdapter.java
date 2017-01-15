@@ -78,6 +78,7 @@ final class PropertyStreamCallAdapter implements CallAdapter<Observable<?>> {
 
         @Override
         protected State next(State state, Observer<? super Prop<R>> observer) {
+            /*race is impossible according to SyncOnSubscribe contract*/
             if (state.isInit()) {
                 state.resetInit();
                 try {
