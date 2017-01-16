@@ -3,6 +3,7 @@ package com.github.mostroverkhov.retrofit_property_streaming;
 import com.github.mostroverkhov.retrofit_property_streaming.model.Prop;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ class TestCommons {
     public static class MockResponse {
 
         private Owner owner;
-        private List<Item<String>> items;
+        private ArrayList<Item<String>> items;
         private long id;
         private String name;
 
@@ -77,7 +78,7 @@ class TestCommons {
 
     public static class MockResponseShort {
         private Owner owner;
-        private List<Item> items;
+        private Collection<Item> items;
 
         public static class Owner {
             private String login;

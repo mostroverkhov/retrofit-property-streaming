@@ -9,6 +9,7 @@ import com.google.gson.stream.JsonToken;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -107,7 +108,7 @@ public class PropertySlicer<T> {
 
     /**
      * only tokens interesting for clients (defined in {@link PropType}) are returned
-     * */
+     */
     private TokenAndName advanceJsonStream(JsonReader jsonStream, boolean isRoot) throws IOException {
 
         JsonToken token = jsonStream.peek();
@@ -307,16 +308,16 @@ public class PropertySlicer<T> {
 
                 JsonReader jsonStream = calculator.jsonStream();
 
-                Type listGenericType;
+                Type listParamType;
+                /*root is array*/
                 if (propName == null) {
-                    listGenericType = getListGenericArgOrNull(targetType);
-
+                    listParamType = getListParameterTypeOrNull(targetType);
                 /*property is array*/
                 } else {
                     Class<?> rootRawType = Utils.getRawType(targetType);
                     try {
                         Type fieldType = rootRawType.getDeclaredField(propName).getGenericType();
-                        listGenericType = getListGenericArgOrNull(fieldType);
+                        listParamType = getListParameterTypeOrNull(fieldType);
                     } catch (NoSuchFieldException e) {
                         /*no field: skip array and return no property special value*/
                         jsonStream.skipValue();
@@ -324,14 +325,31 @@ public class PropertySlicer<T> {
                     }
                 }
 
-                if (listGenericType == null) {
-                    throw new IllegalArgumentException("Target type is expected to be parametrized list: List<T>");
+                if (listParamType == null) {
+                    throw new IllegalArgumentException("Target type is expected to " +
+                            "be parametrized and implement Collection<T>");
                 }
                 PropertyContext context = calculator.context();
-                context.setItemNameAndType(propName, listGenericType);
+                context.setItemNameAndType(propName, listParamType);
 
                 jsonStream.beginArray();
                 return new Prop<>(propName, null, PropType.ARR_START);
+            }
+
+            private Type getListParameterTypeOrNull(Type targetType) {
+                if (targetType instanceof ParameterizedType) {
+                    ParameterizedType parameterizedType = (ParameterizedType) targetType;
+                    Type rawType = parameterizedType.getRawType();
+                    Type[] genericArgs = parameterizedType.getActualTypeArguments();
+                    if (Collection.class.isAssignableFrom(asClass(rawType))) {
+                        return genericArgs.length == 0 ? null : genericArgs[0];
+                    }
+                }
+                return null;
+            }
+
+            private Class<?> asClass(Type rawType) {
+                return (Class<?>) rawType;
             }
         },
 
@@ -361,18 +379,6 @@ public class PropertySlicer<T> {
                 return new Prop<>(itemName, item, PropType.ARR_PROPERTY);
             }
         };
-
-        private static Type getListGenericArgOrNull(Type targetType) {
-            if (targetType instanceof ParameterizedType) {
-                ParameterizedType parameterizedType = (ParameterizedType) targetType;
-                Type rawType = parameterizedType.getRawType();
-                Type[] genericArgs = parameterizedType.getActualTypeArguments();
-                if (rawType == List.class) {
-                    return genericArgs[0];
-                }
-            }
-            return null;
-        }
 
         private static Type getFieldTypeForTarget(Type targetType, String name) {
             Class<?> rootRawType = Utils.getRawType(targetType);
