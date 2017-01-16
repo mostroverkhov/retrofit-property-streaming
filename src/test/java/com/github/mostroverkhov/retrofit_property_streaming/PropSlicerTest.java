@@ -43,10 +43,10 @@ public class PropSlicerTest {
     @Test(expected = IllegalStateException.class)
     public void throwsOnNextAfterDocumentEnd() throws Exception {
 
-        PropertySlicer<TestCommons.MockResponse> propertySlicer = new PropertySlicer<>(
-                TestCommons.MockResponse.class,
-                gson,
-                jsonReader);
+        PropertySlicer<TestCommons.MockResponse> propertySlicer =
+                new PropertySlicerBuilder<TestCommons.MockResponse>(
+                        TestCommons.MockResponse.class,
+                        jsonReader).build();
 
         while (true) {
             propertySlicer.nextProp();
@@ -56,10 +56,10 @@ public class PropSlicerTest {
     @Test
     public void allFields() throws Exception {
 
-        PropertySlicer<TestCommons.MockResponse> calc = new PropertySlicer<>(
-                TestCommons.MockResponse.class,
-                gson,
-                jsonReader);
+        PropertySlicer<TestCommons.MockResponse> calc =
+                new PropertySlicerBuilder<TestCommons.MockResponse>(
+                        TestCommons.MockResponse.class,
+                        jsonReader).build();
 
         List<Prop<TestCommons.MockResponse>> props = TestCommons.getProps(calc);
 
@@ -75,12 +75,27 @@ public class PropSlicerTest {
     }
 
     @Test
+    public void specialTypesTest() throws Exception {
+
+        PropertySlicer<TestCommons.SpecialTypes> slicer =
+                new PropertySlicerBuilder<TestCommons.SpecialTypes>(
+                        TestCommons.SpecialTypes.class,
+                        jsonReader).build();
+
+        List<Prop<TestCommons.SpecialTypes>> props = TestCommons.getProps(slicer);
+
+        assertThat(props).hasSize(2);
+        assertThat(props.get(0).isSimpleProperty());
+        assertThat(props.get(1).isDocumentEnd());
+    }
+
+    @Test
     public void skipFields() throws Exception {
 
-        PropertySlicer<TestCommons.MockResponseShort> calc = new PropertySlicer<>(
-                TestCommons.MockResponseShort.class,
-                gson,
-                jsonReader);
+        PropertySlicer<TestCommons.MockResponseShort> calc =
+                new PropertySlicerBuilder<TestCommons.MockResponseShort>(
+                        TestCommons.MockResponseShort.class,
+                        jsonReader).build();
 
         List<Prop<TestCommons.MockResponseShort>> props = TestCommons.getProps(calc);
 

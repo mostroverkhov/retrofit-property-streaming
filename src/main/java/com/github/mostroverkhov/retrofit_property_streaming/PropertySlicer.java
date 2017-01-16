@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Created by Maksym Ostroverkhov on 13.06.2016.
  */
-public class PropertySlicer<T> {
+class PropertySlicer<T> {
 
     private final Type propTarget;
     private final Gson gson;
@@ -23,7 +23,7 @@ public class PropertySlicer<T> {
 
     private final PropertyContext propertyContext;
 
-    public PropertySlicer(Type propTarget, Gson gson, JsonReader jsonStream) throws IOException {
+    public PropertySlicer(Type propTarget, Gson gson, JsonReader jsonStream) {
         this.propTarget = propTarget;
         this.gson = gson;
         this.jsonStream = jsonStream;
