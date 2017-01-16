@@ -41,11 +41,10 @@ public class PropSlicerEmptyBodyTest {
                 "UTF-8");
 
         try (JsonReader jsonReader = gson.newJsonReader(reader)) {
-
-            PropertySlicer<TestCommons.MockResponse> propertySlicer = new PropertySlicer<>(
-                    TestCommons.MockResponse.class,
-                    gson,
-                    jsonReader);
+            PropertySlicer<TestCommons.MockResponse> propertySlicer =
+                    new PropertySlicerBuilder<TestCommons.MockResponse>(
+                            TestCommons.MockResponse.class,
+                            jsonReader).build();
 
             List<Prop<TestCommons.MockResponse>> props = TestCommons.getProps(propertySlicer);
             Assertions.assertThat(props).hasSize(1);

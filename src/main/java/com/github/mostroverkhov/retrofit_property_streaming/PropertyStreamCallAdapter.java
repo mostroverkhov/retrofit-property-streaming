@@ -84,7 +84,10 @@ final class PropertyStreamCallAdapter implements CallAdapter<Observable<?>> {
                 try {
                     Response<R> response = call.execute();
                     reader = ((ResponseBody) response.body()).charStream();
-                    propertySlicer = new PropertySlicer<>(targetType, gson, gson.newJsonReader(reader));
+                    propertySlicer = new PropertySlicerBuilder<R>(
+                            targetType,
+                            gson.newJsonReader(reader))
+                            .build();
                 } catch (Exception e) {
                     thrown = true;
                     Exceptions.throwIfFatal(e);
