@@ -8,5 +8,6 @@ public enum PropType {
     PROPERTY,
     ARR_PROPERTY,
     ARR_START,
-    ARR_END
+    ARR_END,
+    DOC_END
 }

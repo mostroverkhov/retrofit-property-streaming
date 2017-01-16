@@ -16,6 +16,10 @@ public class Prop<OwnerType> {
         this.value = value;
     }
 
+    public Prop(PropType... propTypes) {
+        this(null, null, propTypes);
+    }
+
     public PropType[] getPropTypes() {
         return propTypes;
     }
@@ -47,6 +51,10 @@ public class Prop<OwnerType> {
 
     public boolean isArrayItemEnd() {
         return contains(propTypes, PropType.ARR_END);
+    }
+
+    public boolean isDocumentEnd() {
+        return contains(propTypes, PropType.DOC_END);
     }
 
     private boolean contains(Object[] arr, Object val) {

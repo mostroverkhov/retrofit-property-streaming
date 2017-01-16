@@ -95,7 +95,7 @@ final class PropertyStreamCallAdapter implements CallAdapter<Observable<?>> {
                 try {
                     Prop<R> prop = propertySlicer.nextProp();
 
-                    if (prop != null) {
+                    if (!prop.isDocumentEnd()) {
                         observer.onNext(prop);
                     } else {
                         observer.onCompleted();

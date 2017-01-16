@@ -12,8 +12,6 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import okio.Okio;
 import retrofit2.Retrofit;
@@ -49,7 +47,7 @@ public class CallAdapterTests {
             MockService mockService = retrofit.create(MockService.class);
             Observer observer = Mockito.mock(Observer.class);
             mockService.mockResponse("42").toBlocking()
-                    .subscribe(new Observer<Prop<TestModels.MockResponse>>() {
+                    .subscribe(new Observer<Prop<TestCommons.MockResponse>>() {
                         @Override
                         public void onCompleted() {
                             observer.onCompleted();
@@ -61,7 +59,7 @@ public class CallAdapterTests {
                         }
 
                         @Override
-                        public void onNext(Prop<TestModels.MockResponse> mockResponseProp) {
+                        public void onNext(Prop<TestCommons.MockResponse> mockResponseProp) {
                             observer.onNext(mockResponseProp);
                         }
                     });
@@ -82,7 +80,7 @@ public class CallAdapterTests {
             MockService mockService = retrofit.create(MockService.class);
             Observer observer = Mockito.mock(Observer.class);
             mockService.mockResponse("42").toBlocking()
-                    .subscribe(new Subscriber<Prop<TestModels.MockResponse>>() {
+                    .subscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
                         @Override
                         public void onCompleted() {
                             observer.onCompleted();
@@ -99,7 +97,7 @@ public class CallAdapterTests {
                         }
 
                         @Override
-                        public void onNext(Prop<TestModels.MockResponse> mockResponseProp) {
+                        public void onNext(Prop<TestCommons.MockResponse> mockResponseProp) {
                             observer.onNext(mockResponseProp);
                             request(1);
                         }
@@ -122,7 +120,7 @@ public class CallAdapterTests {
                     .create(MockServiceSpecialTypes.class);
             Observer observer = Mockito.mock(Observer.class);
             serviceSpecialTypes.mockResponse("42").toBlocking().subscribe(
-                    new Subscriber<Prop<TestModels.SpecialTypes>>() {
+                    new Subscriber<Prop<TestCommons.SpecialTypes>>() {
                         @Override
                         public void onCompleted() {
                             observer.onCompleted();
@@ -134,7 +132,7 @@ public class CallAdapterTests {
                         }
 
                         @Override
-                        public void onNext(Prop<TestModels.SpecialTypes> mockResponseProp) {
+                        public void onNext(Prop<TestCommons.SpecialTypes> mockResponseProp) {
                             observer.onNext(mockResponseProp);
                             request(1);
                         }
@@ -162,11 +160,11 @@ public class CallAdapterTests {
 
     interface MockService {
         @GET("/{id}")
-        Observable<Prop<TestModels.MockResponse>> mockResponse(@Path("id") String id);
+        Observable<Prop<TestCommons.MockResponse>> mockResponse(@Path("id") String id);
     }
 
     interface MockServiceSpecialTypes {
         @GET("/{id}")
-        Observable<Prop<TestModels.SpecialTypes>> mockResponse(@Path("id") String id);
+        Observable<Prop<TestCommons.SpecialTypes>> mockResponse(@Path("id") String id);
     }
 }

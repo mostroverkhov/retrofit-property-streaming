@@ -20,18 +20,20 @@ public class PropertySlicer<T> {
     private final Gson gson;
     private final JsonReader jsonStream;
 
-    private volatile boolean isRoot = true;
-
-    private final PropertyContext propertyContext = new PropertyContext();
+    private final PropertyContext propertyContext;
 
     public PropertySlicer(Type propTarget, Gson gson, JsonReader jsonStream) throws IOException {
         this.propTarget = propTarget;
         this.gson = gson;
         this.jsonStream = jsonStream;
+
+        this.propertyContext = new PropertyContext();
+        this.propertyContext.setRoot(true);
     }
 
     /**
-     * @return next property, or null if end of document is reached
+     * @return next property. It is an error to call {@link #nextProp()} after property with
+     * type {@link PropType#DOC_END} was returned
      */
     public Prop<T> nextProp() {
         try {
@@ -46,34 +48,44 @@ public class PropertySlicer<T> {
     }
 
     private Prop<T> getNextProp() throws IOException {
-        String name = null;
 
-        JsonToken token = jsonStream.peek();
-        if (token == JsonToken.NAME) {
-            name = jsonStream.nextName();
-            token = jsonStream.peek();
-            /*proceed to next if root is object; if root is array, it is consumed by ARR_START delegate,
-            * because we clients are interested in corresponding events*/
-        } else if (token == JsonToken.BEGIN_OBJECT && isRoot) {
-            jsonStream.beginObject();
-            return nextProp();
-            /*proceed to next - end_document, if root is object; otherwise this token is always
-            consumed by OBJECT_OR_PRIMITIVE delegate*/
-        } else if (token == JsonToken.END_OBJECT) {
-            jsonStream.endObject();
-            return nextProp();
+        PropertyContext context = context();
+        boolean isDocEnd = context.isDocEnd();
+        if (isDocEnd) {
+            throw new IllegalStateException("getNextProp() called DOC_END notification");
         }
+        boolean isRoot = context.isRoot();
+        propertyContext.setRoot(false);
+        TokenAndName tokenAndName = advanceJsonStream(jsonStream, isRoot);
+        if (tokenAndName.isEmpty()) {
+            return getNextProp();
+        } else {
+            ResolveResult<T> resolveResult = resolveProperty(tokenAndName);
+            if (resolveResult.isEnd()) {
+                context.setDocEnd(true);
+                return new Prop<>(PropType.DOC_END);
+            }
+            /*proceed to next prop if there is no field with given name in target type*/
+            if (resolveResult.hasProperty()) {
+                return resolveResult.getProp();
+            } else {
+                return getNextProp();
+            }
+        }
+    }
 
-        isRoot = false;
+    private ResolveResult<T> resolveProperty(TokenAndName tokenAndName) throws IOException {
+        JsonToken propValue = tokenAndName.getToken();
+        String propName = tokenAndName.getName();
 
-        Delegate delegate;
-        switch (token) {
+        PropertyConsumer propertyConsumer;
+        switch (propValue) {
             case BEGIN_ARRAY:
-                delegate = Delegate.ARR_START;
+                propertyConsumer = PropertyConsumer.ARR_START;
                 propertyContext.setArrayType();
                 break;
             case END_ARRAY:
-                delegate = Delegate.ARR_END;
+                propertyConsumer = PropertyConsumer.ARR_END;
                 propertyContext.setPropType();
                 break;
             case BEGIN_OBJECT:
@@ -81,30 +93,113 @@ public class PropertySlicer<T> {
             case BOOLEAN:
             case STRING:
             case NULL:
-                delegate = isTargetObject() ? Delegate.OBJECT_OR_PRIMITIVE : Delegate.ARR;
+                propertyConsumer = propertyContext.isArray()
+                        ? PropertyConsumer.ARR
+                        : PropertyConsumer.OBJECT_OR_PRIMITIVE;
                 break;
             case END_DOCUMENT:
-                return null;
+                return ResolveResult.end();
             default:
-                throw new IllegalStateException("Unexpected token: " + token);
+                throw new IllegalStateException("Unexpected token: " + propValue);
         }
-        Prop<T> prop = delegate.resolve(name, propTarget, this);
-        /*proceed to next prop if there is no field with given name in target type*/
-        if (prop == null) {
-            return getNextProp();
+        return ResolveResult.prop(propertyConsumer.resolve(propName, propTarget, this));
+    }
+
+    /**
+     * only tokens interesting for clients (defined in {@link PropType}) are returned
+     * */
+    private TokenAndName advanceJsonStream(JsonReader jsonStream, boolean isRoot) throws IOException {
+
+        JsonToken token = jsonStream.peek();
+        /*property with name*/
+        if (token == JsonToken.NAME) {
+            String propName = jsonStream.nextName();
+            token = jsonStream.peek();
+            return TokenAndName.tokenAndName(token, propName);
+            /*proceed to next if root object; if root is array, it is consumed by ARR_START prop consumer*/
+        } else if (token == JsonToken.BEGIN_OBJECT && isRoot) {
+            jsonStream.beginObject();
+            return TokenAndName.empty();
+            /*proceed to next - clients are not interested in END_OBJECT events*/
+        } else if (token == JsonToken.END_OBJECT) {
+            jsonStream.endObject();
+            return TokenAndName.empty();
         } else {
-            return prop;
+            return TokenAndName.token(token);
         }
     }
 
-    private boolean isTargetObject() {
-        return !propertyContext.isArray();
+    private static class ResolveResult<T> {
+        private final Prop<T> prop;
+        private final boolean isEnd;
+
+        private ResolveResult(Prop<T> prop, boolean isEnd) {
+            this.prop = prop;
+            this.isEnd = isEnd;
+        }
+
+        public static <T> ResolveResult<T> prop(Prop<T> prop) {
+            return new ResolveResult<T>(prop, false);
+        }
+
+        public static <T> ResolveResult<T> end() {
+            return new ResolveResult<>(null, true);
+        }
+
+        public Prop<T> getProp() {
+            return prop;
+        }
+
+        public boolean isEnd() {
+            return isEnd;
+        }
+
+        public boolean hasProperty() {
+            return prop != null;
+        }
+    }
+
+    private static class TokenAndName {
+        private static final TokenAndName EMPTY = new TokenAndName(null, "");
+        private final JsonToken token;
+        private final String propName;
+
+        public static TokenAndName tokenAndName(JsonToken toekn, String propName) {
+            return new TokenAndName(toekn, propName);
+        }
+
+        public static TokenAndName token(JsonToken token) {
+            return new TokenAndName(token, "");
+        }
+
+        public static TokenAndName empty() {
+            return EMPTY;
+        }
+
+        private TokenAndName(JsonToken token, String propName) {
+            this.token = token;
+            this.propName = propName;
+        }
+
+        public JsonToken getToken() {
+            return token;
+        }
+
+        public String getName() {
+            return propName;
+        }
+
+        public boolean isEmpty() {
+            return token == null && Utils.isEmpty(propName);
+        }
     }
 
     private static class PropertyContext {
 
         private volatile boolean isArray;
         private volatile ContextState contextState = ContextState.empty();
+        private volatile boolean isRoot;
+        private volatile boolean isDocEnd;
 
         public void clearNameAndType() {
             contextState = ContextState.empty();
@@ -112,6 +207,22 @@ public class PropertySlicer<T> {
 
         public void setItemNameAndType(String itemName, Type itemType) {
             contextState = ContextState.state(itemName, itemType);
+        }
+
+        public boolean isDocEnd() {
+            return isDocEnd;
+        }
+
+        public void setDocEnd(boolean docEnd) {
+            isDocEnd = docEnd;
+        }
+
+        public boolean isRoot() {
+            return isRoot;
+        }
+
+        public void setRoot(boolean root) {
+            isRoot = root;
         }
 
         public void setArrayType() {
@@ -172,7 +283,7 @@ public class PropertySlicer<T> {
         return jsonStream;
     }
 
-    private enum Delegate {
+    private enum PropertyConsumer {
 
         OBJECT_OR_PRIMITIVE {
             @Override

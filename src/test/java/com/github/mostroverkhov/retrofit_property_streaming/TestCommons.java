@@ -1,12 +1,33 @@
 package com.github.mostroverkhov.retrofit_property_streaming;
 
+import com.github.mostroverkhov.retrofit_property_streaming.model.Prop;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Created by Maksym Ostroverkhov on 14.06.2016.
  */
-class TestModels {
+class TestCommons {
+
+    static <T> List<Prop<T>> getProps(PropertySlicer<T> calc) {
+       List<Prop<T>> props = new ArrayList<>();
+       Prop<T> prop = calc.nextProp();
+
+       boolean shouldStop = false;
+
+       while (!shouldStop) {
+           props.add(prop);
+           if (prop.isDocumentEnd()) {
+               shouldStop = true;
+           } else {
+               prop = calc.nextProp();
+           }
+       }
+       return props;
+   }
+
     public static class MockResponse {
 
         private Owner owner;

@@ -57,4 +57,8 @@ public class Utils {
         }
         return paramType;
     }
+
+    public static boolean isEmpty(String name) {
+        return name == null || name.isEmpty();
+    }
 }

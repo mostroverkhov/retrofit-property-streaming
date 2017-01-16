@@ -39,22 +39,31 @@ public class PropSlicerTest {
         }
     }
 
-    @Test
-    public void propertyCalculatorAllFields() throws Exception {
+    @SuppressWarnings("InfiniteLoopStatement")
+    @Test(expected = IllegalStateException.class)
+    public void throwsOnNextAfterDocumentEnd() throws Exception {
 
-        PropertySlicer<TestModels.MockResponse> calc = new PropertySlicer<>(
-                TestModels.MockResponse.class,
+        PropertySlicer<TestCommons.MockResponse> propertySlicer = new PropertySlicer<>(
+                TestCommons.MockResponse.class,
                 gson,
                 jsonReader);
 
-        List<Prop<TestModels.MockResponse>> props = new ArrayList<>();
-        Prop<TestModels.MockResponse> prop = calc.nextProp();
-
-        while (prop != null) {
-            props.add(prop);
-            prop = calc.nextProp();
+        while (true) {
+            propertySlicer.nextProp();
         }
-        assertThat(props).hasSize(7);
+    }
+
+    @Test
+    public void allFields() throws Exception {
+
+        PropertySlicer<TestCommons.MockResponse> calc = new PropertySlicer<>(
+                TestCommons.MockResponse.class,
+                gson,
+                jsonReader);
+
+        List<Prop<TestCommons.MockResponse>> props = TestCommons.getProps(calc);
+
+        assertThat(props).hasSize(8);
         assertThat(props.get(0).isSimpleProperty());
         assertThat(props.get(1).isSimpleProperty());
         assertThat(props.get(2).isSimpleProperty());
@@ -62,27 +71,26 @@ public class PropSlicerTest {
         assertThat(props.get(4).isArrayItem());
         assertThat(props.get(5).isArrayItem());
         assertThat(props.get(6).isArrayItemEnd());
+        assertThat(props.get(7).isDocumentEnd());
     }
 
     @Test
-    public void propertyCalculatorSkipFields() throws Exception {
+    public void skipFields() throws Exception {
 
-        PropertySlicer<TestModels.MockResponseShort> calc = new PropertySlicer<>(
-                TestModels.MockResponseShort.class,
+        PropertySlicer<TestCommons.MockResponseShort> calc = new PropertySlicer<>(
+                TestCommons.MockResponseShort.class,
                 gson,
                 jsonReader);
-        List<Prop<TestModels.MockResponseShort>> props = new ArrayList<>();
-        Prop<TestModels.MockResponseShort> prop = calc.nextProp();
-        while (prop != null) {
-            props.add(prop);
-            prop = calc.nextProp();
-        }
-        assertThat(props).hasSize(5);
+
+        List<Prop<TestCommons.MockResponseShort>> props = TestCommons.getProps(calc);
+
+        assertThat(props).hasSize(6);
         assertThat(props.get(0).isSimpleProperty());
         assertThat(props.get(1).isArrayItemStart());
         assertThat(props.get(2).isArrayItem());
         assertThat(props.get(3).isArrayItem());
         assertThat(props.get(4).isArrayItemEnd());
+        assertThat(props.get(5).isDocumentEnd());
     }
 
 }
