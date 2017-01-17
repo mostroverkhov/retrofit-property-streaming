@@ -32,6 +32,7 @@ public class MapDeserializerFactory implements TypeAdapterFactory {
                     delegateAdapter.write(out, value);
                 }
 
+                @SuppressWarnings("unchecked")
                 @Override
                 public T read(JsonReader in) throws IOException {
 
