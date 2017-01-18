@@ -5,7 +5,9 @@ repositories {
 }
 
 dependencies {
-    compile group: 'io.reactivex', name: 'rxjava', version: '1.1.5'
+    // https://mvnrepository.com/artifact/io.reactivex.rxjava2/rxjava
+    compile group: 'io.reactivex.rxjava2', name: 'rxjava', version: '2.0.4'
+
     compile group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.0.2'
     compile group: 'com.squareup.retrofit2', name: 'converter-gson', version: '2.0.2'
     compile 'com.google.code.gson:gson:2.6.2'

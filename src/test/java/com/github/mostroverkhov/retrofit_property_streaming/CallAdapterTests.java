@@ -9,17 +9,17 @@ import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import java.io.IOException;
 import java.io.InputStream;
 
+import io.reactivex.Flowable;
 import okio.Okio;
 import retrofit2.Retrofit;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
-import rx.Observable;
-import rx.Observer;
-import rx.Subscriber;
 
 /**
  * Created by Maksym Ostroverkhov on 11.06.2016.
@@ -45,28 +45,34 @@ public class CallAdapterTests {
     public void modelSimpleTypeNoBackpressure() throws Exception {
         try {
             MockService mockService = retrofit.create(MockService.class);
-            Observer observer = Mockito.mock(Observer.class);
-            mockService.mockResponse("42").toBlocking()
-                    .subscribe(new Observer<Prop<TestCommons.MockResponse>>() {
-                        @Override
-                        public void onCompleted() {
-                            observer.onCompleted();
-                        }
+            Subscriber subscriber = Mockito.mock(Subscriber.class);
+            mockService.mockResponse("42")
+                    .blockingSubscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
 
                         @Override
                         public void onError(Throwable e) {
-                            observer.onError(e);
+                            subscriber.onError(e);
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            subscriber.onComplete();
+                        }
+
+                        @Override
+                        public void onSubscribe(Subscription s) {
+                            s.request(Long.MAX_VALUE);
                         }
 
                         @Override
                         public void onNext(Prop<TestCommons.MockResponse> mockResponseProp) {
-                            observer.onNext(mockResponseProp);
+                            subscriber.onNext(mockResponseProp);
                         }
                     });
-            InOrder inOrder = Mockito.inOrder(observer);
-            inOrder.verify(observer, Mockito.times(7)).onNext(Matchers.any(Prop.class));
-            inOrder.verify(observer).onCompleted();
-            inOrder.verify(observer, Mockito.never()).onError(Matchers.any());
+            InOrder inOrder = Mockito.inOrder(subscriber);
+            inOrder.verify(subscriber, Mockito.times(7)).onNext(Matchers.any(Prop.class));
+            inOrder.verify(subscriber).onComplete();
+            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.any());
         } finally {
             //noinspection ThrowFromFinallyBlock
             mockWebServer.shutdown();
@@ -78,34 +84,38 @@ public class CallAdapterTests {
     public void modelSimpleTypeBackpressure() throws Exception {
         try {
             MockService mockService = retrofit.create(MockService.class);
-            Observer observer = Mockito.mock(Observer.class);
-            mockService.mockResponse("42").toBlocking()
-                    .subscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
-                        @Override
-                        public void onCompleted() {
-                            observer.onCompleted();
-                        }
+            Subscriber subscriber = Mockito.mock(Subscriber.class);
+            mockService.mockResponse("42")
+                    .blockingSubscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
+
+                        private Subscription s;
 
                         @Override
                         public void onError(Throwable e) {
-                            observer.onError(e);
+                            subscriber.onError(e);
                         }
 
                         @Override
-                        public void onStart() {
-                            request(1);
+                        public void onComplete() {
+                            subscriber.onComplete();
+                        }
+
+                        @Override
+                        public void onSubscribe(Subscription s) {
+                            this.s = s;
+                            this.s.request(1);
                         }
 
                         @Override
                         public void onNext(Prop<TestCommons.MockResponse> mockResponseProp) {
-                            observer.onNext(mockResponseProp);
-                            request(1);
+                            subscriber.onNext(mockResponseProp);
+                            s.request(1);
                         }
                     });
-            InOrder inOrder = Mockito.inOrder(observer);
-            inOrder.verify(observer, Mockito.times(7)).onNext(Matchers.any(Prop.class));
-            inOrder.verify(observer).onCompleted();
-            inOrder.verify(observer, Mockito.never()).onError(Matchers.any());
+            InOrder inOrder = Mockito.inOrder(subscriber);
+            inOrder.verify(subscriber, Mockito.times(7)).onNext(Matchers.any(Prop.class));
+            inOrder.verify(subscriber).onComplete();
+            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.any());
         } finally {
             //noinspection ThrowFromFinallyBlock
             mockWebServer.shutdown();
@@ -118,35 +128,39 @@ public class CallAdapterTests {
         try {
             MockServiceSpecialTypes serviceSpecialTypes = retrofit
                     .create(MockServiceSpecialTypes.class);
-            Observer observer = Mockito.mock(Observer.class);
-            serviceSpecialTypes.mockResponse("42").toBlocking().subscribe(
+            Subscriber subscriber = Mockito.mock(Subscriber.class);
+            serviceSpecialTypes.mockResponse("42").blockingSubscribe(
                     new Subscriber<Prop<TestCommons.SpecialTypes>>() {
-                        @Override
-                        public void onCompleted() {
-                            observer.onCompleted();
-                        }
+
+                        private Subscription s;
 
                         @Override
                         public void onError(Throwable e) {
-                            observer.onError(e);
+                            subscriber.onError(e);
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            subscriber.onComplete();
+                        }
+
+                        @Override
+                        public void onSubscribe(Subscription s) {
+                            this.s = s;
+                            s.request(1);
                         }
 
                         @Override
                         public void onNext(Prop<TestCommons.SpecialTypes> mockResponseProp) {
-                            observer.onNext(mockResponseProp);
-                            request(1);
-                        }
-
-                        @Override
-                        public void onStart() {
-                            request(1);
+                            subscriber.onNext(mockResponseProp);
+                            s.request(1);
                         }
                     });
 
-            InOrder inOrder = Mockito.inOrder(observer);
-            inOrder.verify(observer, Mockito.times(1)).onNext(Matchers.any(Prop.class));
-            inOrder.verify(observer).onCompleted();
-            inOrder.verify(observer, Mockito.never()).onError(Matchers.any());
+            InOrder inOrder = Mockito.inOrder(subscriber);
+            inOrder.verify(subscriber, Mockito.times(1)).onNext(Matchers.any(Prop.class));
+            inOrder.verify(subscriber).onComplete();
+            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.any());
         } finally {
             //noinspection ThrowFromFinallyBlock
             mockWebServer.shutdown();
@@ -160,11 +174,11 @@ public class CallAdapterTests {
 
     interface MockService {
         @GET("/{id}")
-        Observable<Prop<TestCommons.MockResponse>> mockResponse(@Path("id") String id);
+        Flowable<Prop<TestCommons.MockResponse>> mockResponse(@Path("id") String id);
     }
 
     interface MockServiceSpecialTypes {
         @GET("/{id}")
-        Observable<Prop<TestCommons.SpecialTypes>> mockResponse(@Path("id") String id);
+        Flowable<Prop<TestCommons.SpecialTypes>> mockResponse(@Path("id") String id);
     }
 }

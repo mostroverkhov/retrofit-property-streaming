@@ -1,25 +1,28 @@
 package com.github.mostroverkhov.retrofit_property_streaming;
 
-import com.google.gson.Gson;
 import com.github.mostroverkhov.retrofit_property_streaming.model.Prop;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.FlowableOnSubscribe;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.exceptions.Exceptions;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.CallAdapter;
 import retrofit2.Response;
-import rx.Observable;
-import rx.Observer;
-import rx.exceptions.Exceptions;
-import rx.observables.SyncOnSubscribe;
 
 /**
  * Created by Maksym Ostroverkhov on 11.06.2016.
  */
-final class PropertyStreamCallAdapter implements CallAdapter<Observable<?>> {
+final class PropertyStreamCallAdapter implements CallAdapter<Flowable<?>> {
     private final Type responseType;
     private final Type propOwnerType;
     private final Gson gson;
@@ -36,88 +39,70 @@ final class PropertyStreamCallAdapter implements CallAdapter<Observable<?>> {
     }
 
     @Override
-    public <R> Observable<Prop<R>> adapt(Call<R> call) {
-        return Observable.create(new OnSubscribe<>(call, propOwnerType, gson));
+    public <R> Flowable<Prop<R>> adapt(Call<R> call) {
+        return Flowable.create(new OnSubscribe<>(call, propOwnerType, gson),
+                BackpressureStrategy.BUFFER);
     }
 
-    private static class State {
-
-        private volatile boolean isInit = true;
-
-        public State() {
-        }
-
-        public void resetInit() {
-            isInit = false;
-        }
-
-        public boolean isInit() {
-            return isInit;
-        }
-    }
-
-    private static class OnSubscribe<R> extends SyncOnSubscribe<State, Prop<R>> {
+    private static class OnSubscribe<R> implements FlowableOnSubscribe<Prop<R>> {
 
         private final Call<R> call;
         private final Type targetType;
         private final Gson gson;
-        private Reader reader;
-        private PropertySlicer<R> propertySlicer;
-        private boolean thrown = false;
+        private final AtomicBoolean cancelSignal = new AtomicBoolean(false);
 
         public OnSubscribe(Call<R> call, Type targetType, Gson gson) {
             this.targetType = targetType;
             this.gson = gson;
-            this.call = call.clone();
+            this.call = call;
         }
 
         @Override
-        protected State generateState() {
-            return new State();
-        }
+        public void subscribe(FlowableEmitter<Prop<R>> emitter) throws Exception {
+            try {
+                Call<R> clone = call.clone();
+                Response<R> response = clone.execute();
+                Reader reader = ((ResponseBody) response.body()).charStream();
+                PropertySlicer<R> propertySlicer = new PropertySlicerBuilder<R>(
+                        targetType,
+                        gson.newJsonReader(reader))
+                        .build();
 
-        @Override
-        protected State next(State state, Observer<? super Prop<R>> observer) {
-            /*race is impossible according to SyncOnSubscribe contract*/
-            if (state.isInit()) {
-                state.resetInit();
-                try {
-                    Response<R> response = call.execute();
-                    reader = ((ResponseBody) response.body()).charStream();
-                    propertySlicer = new PropertySlicerBuilder<R>(
-                            targetType,
-                            gson.newJsonReader(reader))
-                            .build();
-                } catch (Exception e) {
-                    thrown = true;
-                    Exceptions.throwIfFatal(e);
-                    observer.onError(e);
-                }
-            }
-            if (!thrown) {
-                try {
-                    Prop<R> prop = propertySlicer.nextProp();
-
-                    if (!prop.isDocumentEnd()) {
-                        observer.onNext(prop);
-                    } else {
-                        observer.onCompleted();
+                emitter.setDisposable(new Disposable() {
+                    @SuppressWarnings("EmptyCatchBlock")
+                    @Override
+                    public void dispose() {
+                        if (cancelSignal.compareAndSet(false, true)) {
+                            try {
+                                reader.close();
+                            } catch (IOException e) {
+                            }
+                        }
                     }
-                } catch (Exception e) {
-                    Exceptions.throwIfFatal(e);
-                    observer.onError(e);
-                }
-            }
-            return state;
-        }
 
-        @Override
-        protected void onUnsubscribe(State state) {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    //log?
+                    @Override
+                    public boolean isDisposed() {
+                        return cancelSignal.get();
+                    }
+                });
+
+                boolean hasMore = true;
+                while (hasMore && !cancelSignal.get()) {
+
+                    Prop<R> prop = propertySlicer.nextProp();
+                    if (!cancelSignal.get()) {
+                        if (!prop.isDocumentEnd()) {
+                            emitter.onNext(prop);
+                        } else {
+                            emitter.onComplete();
+                            hasMore = false;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Exceptions.throwIfFatal(e);
+                if (!cancelSignal.get()) {
+                    emitter.onError(e);
                 }
             }
         }

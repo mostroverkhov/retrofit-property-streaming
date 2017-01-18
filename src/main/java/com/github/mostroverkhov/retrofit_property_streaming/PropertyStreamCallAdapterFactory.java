@@ -29,7 +29,7 @@ public final class PropertyStreamCallAdapterFactory extends CallAdapter.Factory 
     public CallAdapter<?> get(Type returnType, Annotation[] annotations, Retrofit retrofit) {
 
         if ((returnType instanceof ParameterizedType)
-                && getRawType(returnType).getCanonicalName().equals("rx.Observable")) {
+                && getRawType(returnType).getCanonicalName().equals("io.reactivex.Flowable")) {
             Type typeGenericArg = getParameterUpperBound(0, (ParameterizedType) returnType);
             if (typeGenericArg instanceof ParameterizedType && getRawType(typeGenericArg).equals(Prop.class)) {
                 Type propOwnerType = getParameterUpperBound(0, (ParameterizedType) typeGenericArg);
