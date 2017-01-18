@@ -62,7 +62,7 @@ final class PropertyStreamCallAdapter implements CallAdapter<Flowable<?>> {
             try {
                 Call<R> clone = call.clone();
                 Response<R> response = clone.execute();
-                Reader reader = ((ResponseBody) response.body()).charStream();
+                final Reader reader = ((ResponseBody) response.body()).charStream();
                 PropertySlicer<R> propertySlicer = new PropertySlicerBuilder<R>(
                         targetType,
                         gson.newJsonReader(reader))

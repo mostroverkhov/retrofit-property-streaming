@@ -45,7 +45,7 @@ public class CallAdapterTests {
     public void modelSimpleTypeNoBackpressure() throws Exception {
         try {
             MockService mockService = retrofit.create(MockService.class);
-            Subscriber subscriber = Mockito.mock(Subscriber.class);
+            final Subscriber subscriber = Mockito.mock(Subscriber.class);
             mockService.mockResponse("42")
                     .blockingSubscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
 
@@ -72,7 +72,7 @@ public class CallAdapterTests {
             InOrder inOrder = Mockito.inOrder(subscriber);
             inOrder.verify(subscriber, Mockito.times(7)).onNext(Matchers.any(Prop.class));
             inOrder.verify(subscriber).onComplete();
-            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.any());
+            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.<Throwable>any());
         } finally {
             //noinspection ThrowFromFinallyBlock
             mockWebServer.shutdown();
@@ -84,7 +84,7 @@ public class CallAdapterTests {
     public void modelSimpleTypeBackpressure() throws Exception {
         try {
             MockService mockService = retrofit.create(MockService.class);
-            Subscriber subscriber = Mockito.mock(Subscriber.class);
+            final Subscriber subscriber = Mockito.mock(Subscriber.class);
             mockService.mockResponse("42")
                     .blockingSubscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
 
@@ -115,7 +115,7 @@ public class CallAdapterTests {
             InOrder inOrder = Mockito.inOrder(subscriber);
             inOrder.verify(subscriber, Mockito.times(7)).onNext(Matchers.any(Prop.class));
             inOrder.verify(subscriber).onComplete();
-            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.any());
+            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.<Throwable>any());
         } finally {
             //noinspection ThrowFromFinallyBlock
             mockWebServer.shutdown();
@@ -128,7 +128,7 @@ public class CallAdapterTests {
         try {
             MockServiceSpecialTypes serviceSpecialTypes = retrofit
                     .create(MockServiceSpecialTypes.class);
-            Subscriber subscriber = Mockito.mock(Subscriber.class);
+            final Subscriber subscriber = Mockito.mock(Subscriber.class);
             serviceSpecialTypes.mockResponse("42").blockingSubscribe(
                     new Subscriber<Prop<TestCommons.SpecialTypes>>() {
 
@@ -160,7 +160,7 @@ public class CallAdapterTests {
             InOrder inOrder = Mockito.inOrder(subscriber);
             inOrder.verify(subscriber, Mockito.times(1)).onNext(Matchers.any(Prop.class));
             inOrder.verify(subscriber).onComplete();
-            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.any());
+            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.<Throwable>any());
         } finally {
             //noinspection ThrowFromFinallyBlock
             mockWebServer.shutdown();
