@@ -23,7 +23,7 @@ public class MapDeserializerFactory implements TypeAdapterFactory {
         Class<? super T> rawType = type.getRawType();
 
         if (Map.class.isAssignableFrom(rawType)) {
-            TypeAdapter<T> delegateAdapter = gson.getDelegateAdapter(this, type);
+            final TypeAdapter<T> delegateAdapter = gson.getDelegateAdapter(this, type);
 
             return new TypeAdapter<T>() {
 
