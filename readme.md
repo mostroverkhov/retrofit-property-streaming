@@ -93,4 +93,4 @@ Prop{propTypes=[ARR_END], name='items', value=null}
 			maven { url 'https://jitpack.io' }
 	 }
 
-     compile 'com.github.mostroverkhov:retrofit-property-streaming:1.0.0'
+     compile 'com.github.mostroverkhov:retrofit-property-streaming:1.0.1'
