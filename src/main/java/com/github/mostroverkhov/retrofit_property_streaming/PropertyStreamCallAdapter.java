@@ -43,6 +43,25 @@ final class PropertyStreamCallAdapter implements CallAdapter<Observable<?>> {
     private static class State {
 
         private volatile boolean isInit = true;
+        private volatile boolean isError;
+        private volatile boolean isCancelled;
+
+
+        public boolean isError() {
+            return isError;
+        }
+
+        public void setError(boolean error) {
+            isError = error;
+        }
+
+        public boolean isCancelled() {
+            return isCancelled;
+        }
+
+        public void setCancelled(boolean cancelled) {
+            this.isCancelled = cancelled;
+        }
 
         public State() {
         }
@@ -63,12 +82,11 @@ final class PropertyStreamCallAdapter implements CallAdapter<Observable<?>> {
         private final Gson gson;
         private Reader reader;
         private PropertySlicer<R> propertySlicer;
-        private boolean thrown = false;
 
         public OnSubscribe(Call<R> call, Type targetType, Gson gson) {
             this.targetType = targetType;
             this.gson = gson;
-            this.call = call.clone();
+            this.call = call;
         }
 
         @Override
@@ -82,30 +100,31 @@ final class PropertyStreamCallAdapter implements CallAdapter<Observable<?>> {
             if (state.isInit()) {
                 state.resetInit();
                 try {
-                    Response<R> response = call.execute();
+                    Response<R> response = call.clone().execute();
                     reader = ((ResponseBody) response.body()).charStream();
                     propertySlicer = new PropertySlicerBuilder<R>(
                             targetType,
                             gson.newJsonReader(reader))
                             .build();
                 } catch (Exception e) {
-                    thrown = true;
+                    state.setError(true);
                     Exceptions.throwIfFatal(e);
                     observer.onError(e);
                 }
             }
-            if (!thrown) {
+            if (!state.isError()) {
                 try {
                     Prop<R> prop = propertySlicer.nextProp();
-
-                    if (!prop.isDocumentEnd()) {
-                        observer.onNext(prop);
-                    } else {
+                    if (prop.isDocumentEnd()) {
                         observer.onCompleted();
+                    } else {
+                        observer.onNext(prop);
                     }
                 } catch (Exception e) {
                     Exceptions.throwIfFatal(e);
-                    observer.onError(e);
+                    if (!state.isCancelled()) {
+                        observer.onError(e);
+                    }
                 }
             }
             return state;
@@ -115,6 +134,7 @@ final class PropertyStreamCallAdapter implements CallAdapter<Observable<?>> {
         protected void onUnsubscribe(State state) {
             if (reader != null) {
                 try {
+                    state.setCancelled(true);
                     reader.close();
                 } catch (IOException e) {
                     //log?
