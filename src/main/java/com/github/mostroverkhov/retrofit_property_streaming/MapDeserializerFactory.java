@@ -35,21 +35,22 @@ public class MapDeserializerFactory implements TypeAdapterFactory {
                 @SuppressWarnings("unchecked")
                 @Override
                 public T read(JsonReader in) throws IOException {
-
-                    Map map = (Map) delegateAdapter.read(in);
-
-                    Map<Object, Object> res = new HashMap<>();
-                    for (Object key : map.keySet()) {
-                        Object val = map.get(key);
-                        if (val != null) {
-                            res.put(key, val);
-                        }
-                    }
-                    return (T) res;
+                    return (T) put((Map<?, ?>) delegateAdapter.read(in));
                 }
             };
         } else {
             return null;
         }
+    }
+
+    private static <K, V> Map<K, V> put(Map<K, V> map) {
+        Map<K, V> filtered = new HashMap<>();
+        for (K key : map.keySet()) {
+            V val = map.get(key);
+            if (val != null) {
+                filtered.put(key, val);
+            }
+        }
+        return filtered;
     }
 }
