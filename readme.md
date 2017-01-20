@@ -1,4 +1,4 @@
-Backpressured [rxjava](https://github.com/ReactiveX/RxJava) streaming support for [retrofit](https://square.github.io/retrofit/) as events of model properties.  
+####Backpressured [rxjava](https://github.com/ReactiveX/RxJava) streaming support for [retrofit](https://square.github.io/retrofit/) as events of model properties.  
 
 Json payloads only 
 
@@ -84,7 +84,12 @@ Prop{propTypes=[ARR_PROPERTY], name='items', value=Item{name='name1', val=true}}
 Prop{propTypes=[ARR_PROPERTY], name='items', value=Item{name='name2', val=true}}
 Prop{propTypes=[ARR_END], name='items', value=null}
  ```  
- 
+
+###Supported types
+
+RxJava1 ```Observable```  
+RxJava2 ```Flowable```  
+
 ###Artifacts
 
  Binaries are available on jitpack
