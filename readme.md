@@ -98,4 +98,12 @@ RxJava2 ```Flowable```
 			maven { url 'https://jitpack.io' }
 	 }
 
+RxJava1  
+
      compile 'com.github.mostroverkhov:retrofit-property-streaming:1.0.1'
+
+RxJava2  
+
+     dependencies {
+	        compile 'com.github.mostroverkhov:retrofit-property-streaming:2.0.0'
+     }
