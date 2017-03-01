@@ -10,7 +10,7 @@ Supported property types:
 **arr_end** - end of of json array notification, contains property name  
 
 ###Limitations
-binding for properties and array contents only
+binding for properties and array contents only  
 supported java types for json array: ```java.util.List```
 
 ###How to use
