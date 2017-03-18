@@ -1,4 +1,4 @@
-####Backpressured [rxjava](https://github.com/ReactiveX/RxJava) streaming support for [retrofit](https://square.github.io/retrofit/) as events of model properties.  
+#### Backpressured [rxjava](https://github.com/ReactiveX/RxJava) streaming support for [retrofit](https://square.github.io/retrofit/) as events of model properties.  
 
 Json payloads only 
 
@@ -9,11 +9,11 @@ Supported property types:
 **arr_start** - start of json array notification, contains property name  
 **arr_end** - end of of json array notification, contains property name  
 
-###Limitations
+### Limitations
 binding for properties and array contents only  
 supported java types for json array: ```java.util.List```
 
-###How to use
+### How to use
 
 Given that retrofit created as
 
@@ -85,12 +85,12 @@ Prop{propTypes=[ARR_PROPERTY], name='items', value=Item{name='name2', val=true}}
 Prop{propTypes=[ARR_END], name='items', value=null}
  ```  
 
-###Supported types
+### Supported types
 
 RxJava1 ```Observable```  
 RxJava2 ```Flowable```  
 
-###Artifacts
+### Artifacts
 
  Binaries are available on jitpack
 
