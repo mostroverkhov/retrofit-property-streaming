@@ -1,5 +1,5 @@
-#### Backpressured [rxjava](https://github.com/ReactiveX/RxJava) streaming support for [retrofit](https://square.github.io/retrofit/) as events of model properties.  
-
+#### Backpressured streaming support for [retrofit](https://square.github.io/retrofit/) as events of model properties.  
+Backpressured streaming of [retrofit](https://square.github.io/retrofit/) response as events of model properties. Backed by [rxjava](https://github.com/ReactiveX/RxJava)   
 Json payloads only 
 
 Supported property types:
