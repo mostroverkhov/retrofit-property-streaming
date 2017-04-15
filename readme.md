@@ -1,4 +1,4 @@
-#### Backpressured streaming of [retrofit](https://square.github.io/retrofit/) response as model properties. Backed by [rxjava](https://github.com/ReactiveX/RxJava)   
+#### Backpressured streaming of [retrofit](https://square.github.io/retrofit/) response as sequence of model properties. Backed by [rxjava](https://github.com/ReactiveX/RxJava)   
 Json payloads only 
 
 Supported property types:
