@@ -1,4 +1,5 @@
-#### Backpressured streaming of [retrofit](https://square.github.io/retrofit/) response as sequence of model properties. Backed by [rxjava](https://github.com/ReactiveX/RxJava)   
+#### Backpressured streaming of [retrofit](https://square.github.io/retrofit/) response as sequence of model properties. Works best for large payloads
+
 Json payloads only 
 
 Supported property types:
@@ -10,7 +11,7 @@ Supported property types:
 
 ### Limitations
 binding for properties and array contents only  
-supported java types for json array: ```java.util.List```
+supported java types for arrays: ```java.util.List```
 
 ### How to use
 
