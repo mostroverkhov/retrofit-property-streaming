@@ -12,7 +12,7 @@ import java.util.Map;
  */
 class TestCommons {
 
-  static <T> List<Prop<T>> getProps(PropertySlicer<T> calc) {
+  static <T> List<Prop<T>> getProps(PropertyReader<T> calc) {
     List<Prop<T>> props = new ArrayList<>();
     Prop<T> prop = calc.nextProp();
 

@@ -10,19 +10,19 @@ import java.lang.reflect.Type;
  * Created by Maksym Ostroverkhov on 16.01.2017.
  */
 
-public class PropertySlicerBuilder<T> {
+public class PropertyReaderBuilder<T> {
 
   private final Type propTarget;
   private final JsonReader jsonStream;
   private final Gson gson;
 
-  public PropertySlicerBuilder(Type propTarget, JsonReader jsonStream) {
+  public PropertyReaderBuilder(Type propTarget, JsonReader jsonStream) {
     this.propTarget = propTarget;
     this.jsonStream = jsonStream;
     this.gson = new GsonBuilder().registerTypeAdapterFactory(new MapDeserializerFactory()).create();
   }
 
-  public PropertySlicer<T> build() {
-    return new PropertySlicer<>(propTarget, gson, jsonStream);
+  public PropertyReader<T> build() {
+    return new PropertyReader<>(propTarget, gson, jsonStream);
   }
 }

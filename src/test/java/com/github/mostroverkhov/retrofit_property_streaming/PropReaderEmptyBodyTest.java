@@ -1,5 +1,6 @@
 package com.github.mostroverkhov.retrofit_property_streaming;
 
+import com.github.mostroverkhov.retrofit_property_streaming.TestCommons.MockResponse;
 import com.github.mostroverkhov.retrofit_property_streaming.model.Prop;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
@@ -16,7 +17,7 @@ import java.util.List;
  * Created by Maksym Ostroverkhov on 16.01.2017.
  */
 
-public class PropSlicerEmptyBodyTest {
+public class PropReaderEmptyBodyTest {
 
   private Gson gson;
 
@@ -41,12 +42,12 @@ public class PropSlicerEmptyBodyTest {
         "UTF-8");
 
     try (JsonReader jsonReader = gson.newJsonReader(reader)) {
-      PropertySlicer<TestCommons.MockResponse> propertySlicer =
-          new PropertySlicerBuilder<TestCommons.MockResponse>(
+      PropertyReader<MockResponse> propertyReader =
+          new PropertyReaderBuilder<MockResponse>(
               TestCommons.MockResponse.class,
               jsonReader).build();
 
-      List<Prop<TestCommons.MockResponse>> props = TestCommons.getProps(propertySlicer);
+      List<Prop<TestCommons.MockResponse>> props = TestCommons.getProps(propertyReader);
       Assertions.assertThat(props).hasSize(1);
       Assertions.assertThat(props.get(0).isDocumentEnd()).isTrue();
     }

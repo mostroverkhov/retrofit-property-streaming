@@ -8,13 +8,15 @@ import io.reactivex.functions.Cancellable;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableOnSubscribe;
 import io.reactivex.exceptions.Exceptions;
+import java.util.concurrent.atomic.AtomicInteger;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.CallAdapter;
@@ -77,9 +79,16 @@ final class PropertyStreamCallAdapter implements CallAdapter<Flowable<?>> {
 
     class HttpRequest implements Callback<R> {
 
+      private final Prop<R> completeSignal = new Prop<>();
+      private final Prop<R> cancelSignal = new Prop<>();
+      private final Prop<R> errorSignal = new Prop<>();
+      private volatile Throwable error;
+      private volatile boolean finished;
+
       private final Emitter<Prop<R>> emitter;
-      private Call<R> call;
-      private final AtomicBoolean finalSignal = new AtomicBoolean(false);
+      private final Call<R> call;
+      private final Queue<Prop<R>> q = new ConcurrentLinkedQueue<>();
+      private final AtomicInteger qSize = new AtomicInteger();
 
       public HttpRequest(Emitter<Prop<R>> emitter, Call<R> call) {
         this.emitter = emitter;
@@ -94,9 +103,9 @@ final class PropertyStreamCallAdapter implements CallAdapter<Flowable<?>> {
       public void onResponse(Call<R> call, Response<R> response) {
         try {
           if (response.isSuccessful()) {
-            responseSuccess(response);
+            succ(response);
           } else {
-            responseError(emitter, response);
+            error(httpException(response));
           }
         } catch (Exception e) {
           error(e);
@@ -108,34 +117,71 @@ final class PropertyStreamCallAdapter implements CallAdapter<Flowable<?>> {
         error(t);
       }
 
-      void responseError(Emitter<Prop<R>> emitter, Response<R> response) {
-        if (transitToFinalState()) {
-          emitter.onError(httpException(response));
+      void succ(Response<R> response) {
+        Reader bodyReader = ((ResponseBody) response.body()).charStream();
+        PropertyReader<R> propReader = new PropertyReaderBuilder<R>(
+            targetType,
+            gson.newJsonReader(bodyReader))
+            .build();
+        boolean hasMore = true;
+        while (hasMore) {
+          Prop<R> prop = propReader.nextProp();
+          if (finished()) {
+            hasMore = false;
+          } else if (prop.isDocumentEnd()) {
+            hasMore = false;
+            next(completeSignal);
+          } else {
+            next(prop);
+          }
         }
       }
 
-      void responseSuccess(Response<R> response) {
-        if (nonFinalState()) {
-          Reader succRespReader = ((ResponseBody) response.body()).charStream();
-          PropertySlicer<R> propertySlicer = new PropertySlicerBuilder<R>(
-              targetType,
-              gson.newJsonReader(succRespReader))
-              .build();
-          boolean hasMore = true;
-          while (hasMore) {
-            Prop<R> prop = propertySlicer.nextProp();
-            if (finalState()) {
-              hasMore = false;
-            }
-            //TODO: can emit after onError, fix with drain-queue
-            if (!prop.isDocumentEnd()) {
-              emitter.onNext(prop);
-            } else {
-              hasMore = false;
-              if (transitToFinalState()) {
+      void error(Throwable t) {
+        Exceptions.throwIfFatal(t);
+        error = t;
+        next(errorSignal);
+      }
+
+      void cancel() {
+        next(cancelSignal);
+        call.cancel();
+      }
+
+      void toFinished() {
+        finished = true;
+      }
+
+      boolean finished() {
+        return finished;
+      }
+
+      void next(Prop<R> prop) {
+        if (finished()) {
+          return;
+        }
+        if (prop == cancelSignal
+            || prop == completeSignal
+            || prop == errorSignal) {
+          toFinished();
+        }
+        if (prop == cancelSignal) {
+          q.clear();
+        } else {
+          q.offer(prop);
+          if (qSize.getAndIncrement() == 0) {
+            do {
+              Prop<R> next = q.poll();
+              if (next == completeSignal) {
                 emitter.onComplete();
+                break;
+              } else if (next == errorSignal) {
+                emitter.onError(error);
+                break;
+              } else {
+                emitter.onNext(next);
               }
-            }
+            } while (qSize.decrementAndGet() != 0);
           }
         }
       }
@@ -154,31 +200,6 @@ final class PropertyStreamCallAdapter implements CallAdapter<Flowable<?>> {
         } catch (IOException e) {
           return "";
         }
-      }
-
-      void error(Throwable t) {
-        Exceptions.throwIfFatal(t);
-        if (transitToFinalState()) {
-          emitter.onError(t);
-        }
-      }
-
-      void cancel() {
-        if (transitToFinalState()) {
-          call.cancel();
-        }
-      }
-
-      boolean transitToFinalState() {
-        return finalSignal.compareAndSet(false, true);
-      }
-
-      boolean nonFinalState() {
-        return !finalSignal.get();
-      }
-
-      boolean finalState() {
-        return !nonFinalState();
       }
     }
   }

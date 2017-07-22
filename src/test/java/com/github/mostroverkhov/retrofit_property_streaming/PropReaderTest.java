@@ -1,5 +1,8 @@
 package com.github.mostroverkhov.retrofit_property_streaming;
 
+import com.github.mostroverkhov.retrofit_property_streaming.TestCommons.MockResponse;
+import com.github.mostroverkhov.retrofit_property_streaming.TestCommons.MockResponseShort;
+import com.github.mostroverkhov.retrofit_property_streaming.TestCommons.SpecialTypes;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.github.mostroverkhov.retrofit_property_streaming.model.Prop;
@@ -9,7 +12,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by Maksym Ostroverkhov on 13.06.2016.
  */
-public class PropSlicerTest {
+public class PropReaderTest {
 
   private JsonReader jsonReader;
   private Gson gson;
@@ -43,21 +45,21 @@ public class PropSlicerTest {
   @Test(expected = IllegalStateException.class)
   public void throwsOnNextAfterDocumentEnd() throws Exception {
 
-    PropertySlicer<TestCommons.MockResponse> propertySlicer =
-        new PropertySlicerBuilder<TestCommons.MockResponse>(
+    PropertyReader<MockResponse> propertyReader =
+        new PropertyReaderBuilder<MockResponse>(
             TestCommons.MockResponse.class,
             jsonReader).build();
 
     while (true) {
-      propertySlicer.nextProp();
+      propertyReader.nextProp();
     }
   }
 
   @Test
   public void allFields() throws Exception {
 
-    PropertySlicer<TestCommons.MockResponse> calc =
-        new PropertySlicerBuilder<TestCommons.MockResponse>(
+    PropertyReader<MockResponse> calc =
+        new PropertyReaderBuilder<MockResponse>(
             TestCommons.MockResponse.class,
             jsonReader).build();
 
@@ -77,8 +79,8 @@ public class PropSlicerTest {
   @Test
   public void specialTypesTest() throws Exception {
 
-    PropertySlicer<TestCommons.SpecialTypes> slicer =
-        new PropertySlicerBuilder<TestCommons.SpecialTypes>(
+    PropertyReader<SpecialTypes> slicer =
+        new PropertyReaderBuilder<SpecialTypes>(
             TestCommons.SpecialTypes.class,
             jsonReader).build();
 
@@ -92,8 +94,8 @@ public class PropSlicerTest {
   @Test
   public void skipFields() throws Exception {
 
-    PropertySlicer<TestCommons.MockResponseShort> calc =
-        new PropertySlicerBuilder<TestCommons.MockResponseShort>(
+    PropertyReader<MockResponseShort> calc =
+        new PropertyReaderBuilder<MockResponseShort>(
             TestCommons.MockResponseShort.class,
             jsonReader).build();
 

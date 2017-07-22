@@ -10,12 +10,11 @@ import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Created by Maksym Ostroverkhov on 13.06.2016.
  */
-class PropertySlicer<T> {
+class PropertyReader<T> {
 
   private final Type propTarget;
   private final Gson gson;
@@ -23,7 +22,7 @@ class PropertySlicer<T> {
 
   private final PropertyContext propertyContext;
 
-  public PropertySlicer(Type propTarget, Gson gson, JsonReader jsonStream) {
+  public PropertyReader(Type propTarget, Gson gson, JsonReader jsonStream) {
     this.propTarget = propTarget;
     this.gson = gson;
     this.jsonStream = jsonStream;
@@ -290,7 +289,7 @@ class PropertySlicer<T> {
 
     OBJECT_OR_PRIMITIVE {
       @Override
-      <T> Prop<T> resolve(String propName, Type targetType, PropertySlicer<T> calculator)
+      <T> Prop<T> resolve(String propName, Type targetType, PropertyReader<T> calculator)
           throws IOException {
         Gson gson = calculator.gson();
         JsonReader jsonStream = calculator.jsonStream();
@@ -307,23 +306,23 @@ class PropertySlicer<T> {
 
     ARR_START {
       @Override
-      <T> Prop<T> resolve(String propName, Type targetType, PropertySlicer<T> calculator)
+      <T> Prop<T> resolve(String propName, Type targetType, PropertyReader<T> calculator)
           throws IOException {
 
         JsonReader jsonStream = calculator.jsonStream();
 
         Type listParamType;
-                /*root is array*/
+        /*root is array*/
         if (propName == null) {
           listParamType = getListParameterTypeOrNull(targetType);
-                /*property is array*/
+        /*property is array*/
         } else {
           Class<?> rootRawType = Utils.getRawType(targetType);
           try {
             Type fieldType = rootRawType.getDeclaredField(propName).getGenericType();
             listParamType = getListParameterTypeOrNull(fieldType);
           } catch (NoSuchFieldException e) {
-                        /*no field: skip array and return no property special value*/
+            /*no field: skip array and return no property special value*/
             jsonStream.skipValue();
             return null;
           }
@@ -359,7 +358,7 @@ class PropertySlicer<T> {
 
     ARR_END {
       @Override
-      <T> Prop<T> resolve(String propName, Type targetType, PropertySlicer<T> calculator)
+      <T> Prop<T> resolve(String propName, Type targetType, PropertyReader<T> calculator)
           throws IOException {
         PropertyContext context = calculator.context();
         String name = context.getItemName();
@@ -372,7 +371,7 @@ class PropertySlicer<T> {
 
     ARR {
       @Override
-      <T> Prop<T> resolve(String propName, Type targetType, PropertySlicer<T> calculator)
+      <T> Prop<T> resolve(String propName, Type targetType, PropertyReader<T> calculator)
           throws IOException {
         PropertyContext context = calculator.context();
         Type itemType = context.getItemType();
@@ -403,7 +402,7 @@ class PropertySlicer<T> {
      */
     abstract <T> Prop<T> resolve(String propName,
         Type targetType,
-        PropertySlicer<T> calculator) throws IOException;
+        PropertyReader<T> calculator) throws IOException;
 
   }
 }
