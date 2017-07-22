@@ -19,93 +19,93 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class PropSlicerTest {
 
-    private JsonReader jsonReader;
-    private Gson gson;
+  private JsonReader jsonReader;
+  private Gson gson;
 
-    @Before
-    public void setUp() throws Exception {
-        InputStreamReader reader = new InputStreamReader(
-                getClass().getClassLoader().getResourceAsStream("mock_response.json"),
-                "UTF-8");
-        this.gson = new Gson();
-        this.jsonReader = gson.newJsonReader(reader);
+  @Before
+  public void setUp() throws Exception {
+    InputStreamReader reader = new InputStreamReader(
+        getClass().getClassLoader().getResourceAsStream("mock_response.json"),
+        "UTF-8");
+    this.gson = new Gson();
+    this.jsonReader = gson.newJsonReader(reader);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+
+    if (jsonReader != null) {
+      jsonReader.close();
     }
+  }
 
-    @After
-    public void tearDown() throws Exception {
+  @SuppressWarnings("InfiniteLoopStatement")
+  @Test(expected = IllegalStateException.class)
+  public void throwsOnNextAfterDocumentEnd() throws Exception {
 
-        if (jsonReader != null) {
-            jsonReader.close();
-        }
+    PropertySlicer<TestCommons.MockResponse> propertySlicer =
+        new PropertySlicerBuilder<TestCommons.MockResponse>(
+            TestCommons.MockResponse.class,
+            jsonReader).build();
+
+    while (true) {
+      propertySlicer.nextProp();
     }
+  }
 
-    @SuppressWarnings("InfiniteLoopStatement")
-    @Test(expected = IllegalStateException.class)
-    public void throwsOnNextAfterDocumentEnd() throws Exception {
+  @Test
+  public void allFields() throws Exception {
 
-        PropertySlicer<TestCommons.MockResponse> propertySlicer =
-                new PropertySlicerBuilder<TestCommons.MockResponse>(
-                        TestCommons.MockResponse.class,
-                        jsonReader).build();
+    PropertySlicer<TestCommons.MockResponse> calc =
+        new PropertySlicerBuilder<TestCommons.MockResponse>(
+            TestCommons.MockResponse.class,
+            jsonReader).build();
 
-        while (true) {
-            propertySlicer.nextProp();
-        }
-    }
+    List<Prop<TestCommons.MockResponse>> props = TestCommons.getProps(calc);
 
-    @Test
-    public void allFields() throws Exception {
+    assertThat(props).hasSize(8);
+    assertThat(props.get(0).isSimpleProperty());
+    assertThat(props.get(1).isSimpleProperty());
+    assertThat(props.get(2).isSimpleProperty());
+    assertThat(props.get(3).isArrayItemStart());
+    assertThat(props.get(4).isArrayItem());
+    assertThat(props.get(5).isArrayItem());
+    assertThat(props.get(6).isArrayItemEnd());
+    assertThat(props.get(7).isDocumentEnd());
+  }
 
-        PropertySlicer<TestCommons.MockResponse> calc =
-                new PropertySlicerBuilder<TestCommons.MockResponse>(
-                        TestCommons.MockResponse.class,
-                        jsonReader).build();
+  @Test
+  public void specialTypesTest() throws Exception {
 
-        List<Prop<TestCommons.MockResponse>> props = TestCommons.getProps(calc);
+    PropertySlicer<TestCommons.SpecialTypes> slicer =
+        new PropertySlicerBuilder<TestCommons.SpecialTypes>(
+            TestCommons.SpecialTypes.class,
+            jsonReader).build();
 
-        assertThat(props).hasSize(8);
-        assertThat(props.get(0).isSimpleProperty());
-        assertThat(props.get(1).isSimpleProperty());
-        assertThat(props.get(2).isSimpleProperty());
-        assertThat(props.get(3).isArrayItemStart());
-        assertThat(props.get(4).isArrayItem());
-        assertThat(props.get(5).isArrayItem());
-        assertThat(props.get(6).isArrayItemEnd());
-        assertThat(props.get(7).isDocumentEnd());
-    }
+    List<Prop<TestCommons.SpecialTypes>> props = TestCommons.getProps(slicer);
 
-    @Test
-    public void specialTypesTest() throws Exception {
+    assertThat(props).hasSize(2);
+    assertThat(props.get(0).isSimpleProperty());
+    assertThat(props.get(1).isDocumentEnd());
+  }
 
-        PropertySlicer<TestCommons.SpecialTypes> slicer =
-                new PropertySlicerBuilder<TestCommons.SpecialTypes>(
-                        TestCommons.SpecialTypes.class,
-                        jsonReader).build();
+  @Test
+  public void skipFields() throws Exception {
 
-        List<Prop<TestCommons.SpecialTypes>> props = TestCommons.getProps(slicer);
+    PropertySlicer<TestCommons.MockResponseShort> calc =
+        new PropertySlicerBuilder<TestCommons.MockResponseShort>(
+            TestCommons.MockResponseShort.class,
+            jsonReader).build();
 
-        assertThat(props).hasSize(2);
-        assertThat(props.get(0).isSimpleProperty());
-        assertThat(props.get(1).isDocumentEnd());
-    }
+    List<Prop<TestCommons.MockResponseShort>> props = TestCommons.getProps(calc);
 
-    @Test
-    public void skipFields() throws Exception {
-
-        PropertySlicer<TestCommons.MockResponseShort> calc =
-                new PropertySlicerBuilder<TestCommons.MockResponseShort>(
-                        TestCommons.MockResponseShort.class,
-                        jsonReader).build();
-
-        List<Prop<TestCommons.MockResponseShort>> props = TestCommons.getProps(calc);
-
-        assertThat(props).hasSize(6);
-        assertThat(props.get(0).isSimpleProperty());
-        assertThat(props.get(1).isArrayItemStart());
-        assertThat(props.get(2).isArrayItem());
-        assertThat(props.get(3).isArrayItem());
-        assertThat(props.get(4).isArrayItemEnd());
-        assertThat(props.get(5).isDocumentEnd());
-    }
+    assertThat(props).hasSize(6);
+    assertThat(props.get(0).isSimpleProperty());
+    assertThat(props.get(1).isArrayItemStart());
+    assertThat(props.get(2).isArrayItem());
+    assertThat(props.get(3).isArrayItem());
+    assertThat(props.get(4).isArrayItemEnd());
+    assertThat(props.get(5).isDocumentEnd());
+  }
 
 }

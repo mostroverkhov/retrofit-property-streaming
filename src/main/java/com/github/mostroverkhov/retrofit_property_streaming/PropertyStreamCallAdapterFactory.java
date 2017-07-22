@@ -15,27 +15,28 @@ import retrofit2.Retrofit;
  */
 public final class PropertyStreamCallAdapterFactory extends CallAdapter.Factory {
 
-    private final Gson gson = new Gson();
-    private static final PropertyStreamCallAdapterFactory INSTANCE = new PropertyStreamCallAdapterFactory();
+  private final Gson gson = new Gson();
+  private static final PropertyStreamCallAdapterFactory INSTANCE = new PropertyStreamCallAdapterFactory();
 
-    private PropertyStreamCallAdapterFactory() {
+  private PropertyStreamCallAdapterFactory() {
+  }
+
+  public static PropertyStreamCallAdapterFactory create() {
+    return INSTANCE;
+  }
+
+  @Override
+  public CallAdapter<?> get(Type returnType, Annotation[] annotations, Retrofit retrofit) {
+
+    if ((returnType instanceof ParameterizedType)
+        && getRawType(returnType).getCanonicalName().equals("io.reactivex.Flowable")) {
+      Type typeGenericArg = getParameterUpperBound(0, (ParameterizedType) returnType);
+      if (typeGenericArg instanceof ParameterizedType && getRawType(typeGenericArg)
+          .equals(Prop.class)) {
+        Type propOwnerType = getParameterUpperBound(0, (ParameterizedType) typeGenericArg);
+        return new PropertyStreamCallAdapter(Prop.class, propOwnerType, gson);
+      }
     }
-
-    public static PropertyStreamCallAdapterFactory create() {
-        return INSTANCE;
-    }
-
-    @Override
-    public CallAdapter<?> get(Type returnType, Annotation[] annotations, Retrofit retrofit) {
-
-        if ((returnType instanceof ParameterizedType)
-                && getRawType(returnType).getCanonicalName().equals("io.reactivex.Flowable")) {
-            Type typeGenericArg = getParameterUpperBound(0, (ParameterizedType) returnType);
-            if (typeGenericArg instanceof ParameterizedType && getRawType(typeGenericArg).equals(Prop.class)) {
-                Type propOwnerType = getParameterUpperBound(0, (ParameterizedType) typeGenericArg);
-                return new PropertyStreamCallAdapter(Prop.class, propOwnerType, gson);
-            }
-        }
-        return null;
-    }
+    return null;
+  }
 }

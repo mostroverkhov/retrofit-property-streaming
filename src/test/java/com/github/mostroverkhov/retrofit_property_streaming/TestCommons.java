@@ -12,112 +12,118 @@ import java.util.Map;
  */
 class TestCommons {
 
-    static <T> List<Prop<T>> getProps(PropertySlicer<T> calc) {
-       List<Prop<T>> props = new ArrayList<>();
-       Prop<T> prop = calc.nextProp();
+  static <T> List<Prop<T>> getProps(PropertySlicer<T> calc) {
+    List<Prop<T>> props = new ArrayList<>();
+    Prop<T> prop = calc.nextProp();
 
-       boolean shouldStop = false;
+    boolean shouldStop = false;
 
-       while (!shouldStop) {
-           props.add(prop);
-           if (prop.isDocumentEnd()) {
-               shouldStop = true;
-           } else {
-               prop = calc.nextProp();
-           }
-       }
-       return props;
-   }
+    while (!shouldStop) {
+      props.add(prop);
+      if (prop.isDocumentEnd()) {
+        shouldStop = true;
+      } else {
+        prop = calc.nextProp();
+      }
+    }
+    return props;
+  }
 
-    public static class MockResponse {
+  public static class MockResponse {
 
-        private Owner owner;
-        private ArrayList<Item<String>> items;
-        private long id;
-        private String name;
+    private Owner owner;
+    private ArrayList<Item<String>> items;
+    private long id;
+    private String name;
 
-        public static class Owner {
-            private String login;
-            private int id;
+    public static class Owner {
 
-            @Override
-            public String toString() {
-                final StringBuilder sb = new StringBuilder("Owner{");
-                sb.append("login='").append(login).append('\'');
-                sb.append(", id=").append(id);
-                sb.append('}');
-                return sb.toString();
-            }
-        }
+      private String login;
+      private int id;
 
-        public static class Item<T> {
-            private T name;
-            private boolean val;
-
-            @Override
-            public String toString() {
-                final StringBuilder sb = new StringBuilder("Item{");
-                sb.append("name='").append(name).append('\'');
-                sb.append(", val=").append(val);
-                sb.append('}');
-                return sb.toString();
-            }
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder("MockResponse{");
-            sb.append("owner=").append(owner);
-            sb.append(", items=").append(items);
-            sb.append(", id=").append(id);
-            sb.append(", name='").append(name).append('\'');
-            sb.append('}');
-            return sb.toString();
-        }
+      @Override
+      public String toString() {
+        final StringBuilder sb = new StringBuilder("Owner{");
+        sb.append("login='").append(login).append('\'');
+        sb.append(", id=").append(id);
+        sb.append('}');
+        return sb.toString();
+      }
     }
 
-    public static class MockResponseShort {
-        private Owner owner;
-        private Collection<Item> items;
+    public static class Item<T> {
 
-        public static class Owner {
-            private String login;
-            private int id;
+      private T name;
+      private boolean val;
 
-            @Override
-            public String toString() {
-                final StringBuilder sb = new StringBuilder("Owner{");
-                sb.append("login='").append(login).append('\'');
-                sb.append(", id=").append(id);
-                sb.append('}');
-                return sb.toString();
-            }
-        }
-
-        public static class Item {
-            private String name;
-            private boolean val;
-
-            @Override
-            public String toString() {
-                final StringBuilder sb = new StringBuilder("Item{");
-                sb.append("name='").append(name).append('\'');
-                sb.append(", val=").append(val);
-                sb.append('}');
-                return sb.toString();
-            }
-        }
+      @Override
+      public String toString() {
+        final StringBuilder sb = new StringBuilder("Item{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", val=").append(val);
+        sb.append('}');
+        return sb.toString();
+      }
     }
 
-    public static class SpecialTypes {
-        private Map<String, Float> owner;
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder("SpecialTypes{");
-            sb.append("owner=").append(owner);
-            sb.append('}');
-            return sb.toString();
-        }
+    @Override
+    public String toString() {
+      final StringBuilder sb = new StringBuilder("MockResponse{");
+      sb.append("owner=").append(owner);
+      sb.append(", items=").append(items);
+      sb.append(", id=").append(id);
+      sb.append(", name='").append(name).append('\'');
+      sb.append('}');
+      return sb.toString();
     }
+  }
+
+  public static class MockResponseShort {
+
+    private Owner owner;
+    private Collection<Item> items;
+
+    public static class Owner {
+
+      private String login;
+      private int id;
+
+      @Override
+      public String toString() {
+        final StringBuilder sb = new StringBuilder("Owner{");
+        sb.append("login='").append(login).append('\'');
+        sb.append(", id=").append(id);
+        sb.append('}');
+        return sb.toString();
+      }
+    }
+
+    public static class Item {
+
+      private String name;
+      private boolean val;
+
+      @Override
+      public String toString() {
+        final StringBuilder sb = new StringBuilder("Item{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", val=").append(val);
+        sb.append('}');
+        return sb.toString();
+      }
+    }
+  }
+
+  public static class SpecialTypes {
+
+    private Map<String, Float> owner;
+
+    @Override
+    public String toString() {
+      final StringBuilder sb = new StringBuilder("SpecialTypes{");
+      sb.append("owner=").append(owner);
+      sb.append('}');
+      return sb.toString();
+    }
+  }
 }

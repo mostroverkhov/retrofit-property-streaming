@@ -17,40 +17,40 @@ import java.util.Map;
 
 public class MapDeserializerFactory implements TypeAdapterFactory {
 
-    @Override
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+  @Override
+  public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
 
-        Class<? super T> rawType = type.getRawType();
+    Class<? super T> rawType = type.getRawType();
 
-        if (Map.class.isAssignableFrom(rawType)) {
-            final TypeAdapter<T> delegateAdapter = gson.getDelegateAdapter(this, type);
+    if (Map.class.isAssignableFrom(rawType)) {
+      final TypeAdapter<T> delegateAdapter = gson.getDelegateAdapter(this, type);
 
-            return new TypeAdapter<T>() {
+      return new TypeAdapter<T>() {
 
-                @Override
-                public void write(JsonWriter out, T value) throws IOException {
-                    delegateAdapter.write(out, value);
-                }
-
-                @SuppressWarnings("unchecked")
-                @Override
-                public T read(JsonReader in) throws IOException {
-                    return (T) put((Map<?, ?>) delegateAdapter.read(in));
-                }
-            };
-        } else {
-            return null;
+        @Override
+        public void write(JsonWriter out, T value) throws IOException {
+          delegateAdapter.write(out, value);
         }
-    }
 
-    private static <K, V> Map<K, V> put(Map<K, V> map) {
-        Map<K, V> filtered = new HashMap<>();
-        for (K key : map.keySet()) {
-            V val = map.get(key);
-            if (val != null) {
-                filtered.put(key, val);
-            }
+        @SuppressWarnings("unchecked")
+        @Override
+        public T read(JsonReader in) throws IOException {
+          return (T) put((Map<?, ?>) delegateAdapter.read(in));
         }
-        return filtered;
+      };
+    } else {
+      return null;
     }
+  }
+
+  private static <K, V> Map<K, V> put(Map<K, V> map) {
+    Map<K, V> filtered = new HashMap<>();
+    for (K key : map.keySet()) {
+      V val = map.get(key);
+      if (val != null) {
+        filtered.put(key, val);
+      }
+    }
+    return filtered;
+  }
 }

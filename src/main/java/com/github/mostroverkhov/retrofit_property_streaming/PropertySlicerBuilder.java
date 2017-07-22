@@ -12,17 +12,17 @@ import java.lang.reflect.Type;
 
 public class PropertySlicerBuilder<T> {
 
-    private final Type propTarget;
-    private final JsonReader jsonStream;
-    private final Gson gson;
+  private final Type propTarget;
+  private final JsonReader jsonStream;
+  private final Gson gson;
 
-    public PropertySlicerBuilder(Type propTarget, JsonReader jsonStream) {
-        this.propTarget = propTarget;
-        this.jsonStream = jsonStream;
-        this.gson = new GsonBuilder().registerTypeAdapterFactory(new MapDeserializerFactory()).create();
-    }
+  public PropertySlicerBuilder(Type propTarget, JsonReader jsonStream) {
+    this.propTarget = propTarget;
+    this.jsonStream = jsonStream;
+    this.gson = new GsonBuilder().registerTypeAdapterFactory(new MapDeserializerFactory()).create();
+  }
 
-    public PropertySlicer<T> build() {
-        return new PropertySlicer<>(propTarget, gson, jsonStream);
-    }
+  public PropertySlicer<T> build() {
+    return new PropertySlicer<>(propTarget, gson, jsonStream);
+  }
 }

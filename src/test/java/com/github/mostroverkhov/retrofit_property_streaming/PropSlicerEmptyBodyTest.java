@@ -18,37 +18,37 @@ import java.util.List;
 
 public class PropSlicerEmptyBodyTest {
 
-    private Gson gson;
+  private Gson gson;
 
-    @Before
-    public void setUp() throws Exception {
-        gson = new Gson();
+  @Before
+  public void setUp() throws Exception {
+    gson = new Gson();
+  }
+
+  @Test
+  public void emptyArray() throws Exception {
+    assertEmpty("empty_array.json");
+  }
+
+  @Test
+  public void emptyObject() throws Exception {
+    assertEmpty("empty_object.json");
+  }
+
+  private void assertEmpty(String resourceFile) throws IOException {
+    InputStreamReader reader = new InputStreamReader(
+        getClass().getClassLoader().getResourceAsStream(resourceFile),
+        "UTF-8");
+
+    try (JsonReader jsonReader = gson.newJsonReader(reader)) {
+      PropertySlicer<TestCommons.MockResponse> propertySlicer =
+          new PropertySlicerBuilder<TestCommons.MockResponse>(
+              TestCommons.MockResponse.class,
+              jsonReader).build();
+
+      List<Prop<TestCommons.MockResponse>> props = TestCommons.getProps(propertySlicer);
+      Assertions.assertThat(props).hasSize(1);
+      Assertions.assertThat(props.get(0).isDocumentEnd()).isTrue();
     }
-
-    @Test
-    public void emptyArray() throws Exception {
-        assertEmpty("empty_array.json");
-    }
-
-    @Test
-    public void emptyObject() throws Exception {
-        assertEmpty("empty_object.json");
-    }
-
-    private void assertEmpty(String resourceFile) throws IOException {
-        InputStreamReader reader = new InputStreamReader(
-                getClass().getClassLoader().getResourceAsStream(resourceFile),
-                "UTF-8");
-
-        try (JsonReader jsonReader = gson.newJsonReader(reader)) {
-            PropertySlicer<TestCommons.MockResponse> propertySlicer =
-                    new PropertySlicerBuilder<TestCommons.MockResponse>(
-                            TestCommons.MockResponse.class,
-                            jsonReader).build();
-
-            List<Prop<TestCommons.MockResponse>> props = TestCommons.getProps(propertySlicer);
-            Assertions.assertThat(props).hasSize(1);
-            Assertions.assertThat(props.get(0).isDocumentEnd()).isTrue();
-        }
-    }
+  }
 }
