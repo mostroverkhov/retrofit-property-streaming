@@ -4,6 +4,7 @@ import com.github.mostroverkhov.retrofit_property_streaming.model.Prop;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -26,159 +27,177 @@ import retrofit2.http.Path;
  */
 public class CallAdapterTests {
 
-    private MockWebServer mockWebServer;
-    private Retrofit retrofit;
+  private MockWebServer mockWebServer;
+  private Retrofit retrofit;
 
-    @Before
-    public void setUp() throws Exception {
-        mockWebServer = new MockWebServer();
-        mockWebServer.enqueue(new MockResponse().setBody(mockResponse()));
-        retrofit = new Retrofit.Builder()
-                .baseUrl(mockWebServer.url("/").toString())
-                .addCallAdapterFactory(PropertyStreamCallAdapterFactory.create())
-                .addConverterFactory(PropertyStreamConverterFactory.create())
-                .build();
+  @Before
+  public void setUp() throws Exception {
+    mockWebServer = new MockWebServer();
+    String body = mockResponse();
+    mockWebServer.enqueue(new MockResponse().setBody(body));
+    mockWebServer.enqueue(new MockResponse().setBody(body));
+    retrofit = new Retrofit.Builder()
+        .baseUrl(mockWebServer.url("/").toString())
+        .addCallAdapterFactory(PropertyStreamCallAdapterFactory.create())
+        .addConverterFactory(PropertyStreamConverterFactory.create())
+        .build();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void modelSimpleTypeNoBackpressure() throws Exception {
+    try {
+      MockService mockService = retrofit.create(MockService.class);
+      final Subscriber subscriber = Mockito.mock(Subscriber.class);
+      mockService.mockResponse("42")
+          .blockingSubscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
+
+            @Override
+            public void onError(Throwable e) {
+              subscriber.onError(e);
+            }
+
+            @Override
+            public void onComplete() {
+              subscriber.onComplete();
+            }
+
+            @Override
+            public void onSubscribe(Subscription s) {
+              s.request(Long.MAX_VALUE);
+            }
+
+            @Override
+            public void onNext(Prop<TestCommons.MockResponse> mockResponseProp) {
+              subscriber.onNext(mockResponseProp);
+            }
+          });
+      InOrder inOrder = Mockito.inOrder(subscriber);
+      inOrder.verify(subscriber, Mockito.times(7)).onNext(Matchers.any(Prop.class));
+      inOrder.verify(subscriber).onComplete();
+      inOrder.verify(subscriber, Mockito.never()).onError(Matchers.<Throwable>any());
+    } finally {
+      //noinspection ThrowFromFinallyBlock
+      mockWebServer.shutdown();
     }
+  }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void modelSimpleTypeNoBackpressure() throws Exception {
-        try {
-            MockService mockService = retrofit.create(MockService.class);
-            final Subscriber subscriber = Mockito.mock(Subscriber.class);
-            mockService.mockResponse("42")
-                    .blockingSubscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
-
-                        @Override
-                        public void onError(Throwable e) {
-                            subscriber.onError(e);
-                        }
-
-                        @Override
-                        public void onComplete() {
-                            subscriber.onComplete();
-                        }
-
-                        @Override
-                        public void onSubscribe(Subscription s) {
-                            s.request(Long.MAX_VALUE);
-                        }
-
-                        @Override
-                        public void onNext(Prop<TestCommons.MockResponse> mockResponseProp) {
-                            subscriber.onNext(mockResponseProp);
-                        }
-                    });
-            InOrder inOrder = Mockito.inOrder(subscriber);
-            inOrder.verify(subscriber, Mockito.times(7)).onNext(Matchers.any(Prop.class));
-            inOrder.verify(subscriber).onComplete();
-            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.<Throwable>any());
-        } finally {
-            //noinspection ThrowFromFinallyBlock
-            mockWebServer.shutdown();
-        }
+  @Test
+  public void multipleSubscriptions() throws Exception {
+    try {
+      MockService mockService = retrofit.create(MockService.class);
+      Flowable<Prop<TestCommons.MockResponse>> flowable = mockService.mockResponse("42");
+      Prop<TestCommons.MockResponse> resp1 = flowable.blockingFirst();
+      Prop<TestCommons.MockResponse> resp2 = flowable.blockingFirst();
+      Assert.assertNotNull(resp1);
+      Assert.assertNotNull(resp2);
+    } finally {
+      mockWebServer.shutdown();
     }
+  }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void modelSimpleTypeBackpressure() throws Exception {
-        try {
-            MockService mockService = retrofit.create(MockService.class);
-            final Subscriber subscriber = Mockito.mock(Subscriber.class);
-            mockService.mockResponse("42")
-                    .blockingSubscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
+  @SuppressWarnings("unchecked")
+  @Test
+  public void modelSimpleTypeBackpressure() throws Exception {
+    try {
+      MockService mockService = retrofit.create(MockService.class);
+      final Subscriber subscriber = Mockito.mock(Subscriber.class);
+      mockService.mockResponse("42")
+          .blockingSubscribe(new Subscriber<Prop<TestCommons.MockResponse>>() {
 
-                        private Subscription s;
+            private Subscription s;
 
-                        @Override
-                        public void onError(Throwable e) {
-                            subscriber.onError(e);
-                        }
+            @Override
+            public void onError(Throwable e) {
+              subscriber.onError(e);
+            }
 
-                        @Override
-                        public void onComplete() {
-                            subscriber.onComplete();
-                        }
+            @Override
+            public void onComplete() {
+              subscriber.onComplete();
+            }
 
-                        @Override
-                        public void onSubscribe(Subscription s) {
-                            this.s = s;
-                            this.s.request(1);
-                        }
+            @Override
+            public void onSubscribe(Subscription s) {
+              this.s = s;
+              this.s.request(1);
+            }
 
-                        @Override
-                        public void onNext(Prop<TestCommons.MockResponse> mockResponseProp) {
-                            subscriber.onNext(mockResponseProp);
-                            s.request(1);
-                        }
-                    });
-            InOrder inOrder = Mockito.inOrder(subscriber);
-            inOrder.verify(subscriber, Mockito.times(7)).onNext(Matchers.any(Prop.class));
-            inOrder.verify(subscriber).onComplete();
-            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.<Throwable>any());
-        } finally {
-            //noinspection ThrowFromFinallyBlock
-            mockWebServer.shutdown();
-        }
+            @Override
+            public void onNext(Prop<TestCommons.MockResponse> mockResponseProp) {
+              subscriber.onNext(mockResponseProp);
+              s.request(1);
+            }
+          });
+      InOrder inOrder = Mockito.inOrder(subscriber);
+      inOrder.verify(subscriber, Mockito.times(7)).onNext(Matchers.any(Prop.class));
+      inOrder.verify(subscriber).onComplete();
+      inOrder.verify(subscriber, Mockito.never()).onError(Matchers.<Throwable>any());
+    } finally {
+      //noinspection ThrowFromFinallyBlock
+      mockWebServer.shutdown();
     }
+  }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void modelSpecialTypes() throws Exception {
-        try {
-            MockServiceSpecialTypes serviceSpecialTypes = retrofit
-                    .create(MockServiceSpecialTypes.class);
-            final Subscriber subscriber = Mockito.mock(Subscriber.class);
-            serviceSpecialTypes.mockResponse("42").blockingSubscribe(
-                    new Subscriber<Prop<TestCommons.SpecialTypes>>() {
+  @SuppressWarnings("unchecked")
+  @Test
+  public void modelSpecialTypes() throws Exception {
+    try {
+      MockServiceSpecialTypes serviceSpecialTypes = retrofit
+          .create(MockServiceSpecialTypes.class);
+      final Subscriber subscriber = Mockito.mock(Subscriber.class);
+      serviceSpecialTypes.mockResponse("42").blockingSubscribe(
+          new Subscriber<Prop<TestCommons.SpecialTypes>>() {
 
-                        private Subscription s;
+            private Subscription s;
 
-                        @Override
-                        public void onError(Throwable e) {
-                            subscriber.onError(e);
-                        }
+            @Override
+            public void onError(Throwable e) {
+              subscriber.onError(e);
+            }
 
-                        @Override
-                        public void onComplete() {
-                            subscriber.onComplete();
-                        }
+            @Override
+            public void onComplete() {
+              subscriber.onComplete();
+            }
 
-                        @Override
-                        public void onSubscribe(Subscription s) {
-                            this.s = s;
-                            s.request(1);
-                        }
+            @Override
+            public void onSubscribe(Subscription s) {
+              this.s = s;
+              s.request(1);
+            }
 
-                        @Override
-                        public void onNext(Prop<TestCommons.SpecialTypes> mockResponseProp) {
-                            subscriber.onNext(mockResponseProp);
-                            s.request(1);
-                        }
-                    });
+            @Override
+            public void onNext(Prop<TestCommons.SpecialTypes> mockResponseProp) {
+              subscriber.onNext(mockResponseProp);
+              s.request(1);
+            }
+          });
 
-            InOrder inOrder = Mockito.inOrder(subscriber);
-            inOrder.verify(subscriber, Mockito.times(1)).onNext(Matchers.any(Prop.class));
-            inOrder.verify(subscriber).onComplete();
-            inOrder.verify(subscriber, Mockito.never()).onError(Matchers.<Throwable>any());
-        } finally {
-            //noinspection ThrowFromFinallyBlock
-            mockWebServer.shutdown();
-        }
+      InOrder inOrder = Mockito.inOrder(subscriber);
+      inOrder.verify(subscriber, Mockito.times(1)).onNext(Matchers.any(Prop.class));
+      inOrder.verify(subscriber).onComplete();
+      inOrder.verify(subscriber, Mockito.never()).onError(Matchers.<Throwable>any());
+    } finally {
+      //noinspection ThrowFromFinallyBlock
+      mockWebServer.shutdown();
     }
+  }
 
-    private String mockResponse() throws IOException {
-        InputStream stream = getClass().getClassLoader().getResourceAsStream("mock_response.json");
-        return Okio.buffer(Okio.source(stream)).readUtf8();
-    }
+  private String mockResponse() throws IOException {
+    InputStream stream = getClass().getClassLoader().getResourceAsStream("mock_response.json");
+    return Okio.buffer(Okio.source(stream)).readUtf8();
+  }
 
-    interface MockService {
-        @GET("/{id}")
-        Flowable<Prop<TestCommons.MockResponse>> mockResponse(@Path("id") String id);
-    }
+  interface MockService {
 
-    interface MockServiceSpecialTypes {
-        @GET("/{id}")
-        Flowable<Prop<TestCommons.SpecialTypes>> mockResponse(@Path("id") String id);
-    }
+    @GET("/{id}")
+    Flowable<Prop<TestCommons.MockResponse>> mockResponse(@Path("id") String id);
+  }
+
+  interface MockServiceSpecialTypes {
+
+    @GET("/{id}")
+    Flowable<Prop<TestCommons.SpecialTypes>> mockResponse(@Path("id") String id);
+  }
 }
