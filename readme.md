@@ -93,15 +93,17 @@ RxJava2 ```Flowable```
  Binaries are available on jitpack
 
      repositories {
-			maven { url 'https://jitpack.io' }
-	 }
+       maven { url 'https://jitpack.io' }
+     }
 
 RxJava1  
-
+ 
+    dependencies {
      compile 'com.github.mostroverkhov:retrofit-property-streaming:1.0.1'
+    }
 
 RxJava2  
 
      dependencies {
-	        compile 'com.github.mostroverkhov:retrofit-property-streaming:2.0.0'
+       compile 'com.github.mostroverkhov:retrofit-property-streaming:2.0.1'
      }
