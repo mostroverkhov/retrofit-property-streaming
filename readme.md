@@ -1,17 +1,15 @@
-#### Streaming of [retrofit](https://square.github.io/retrofit/) response as sequence of model properties. Works best for large payloads
+Streaming of [retrofit](https://square.github.io/retrofit/) json response as sequence of model properties, with array contents flattened into stream. Intended for processing of responses containing large arrays
 
 Json payloads only 
 
-Supported property types:
+For arrays, java model property should be ```java.util.List```
+
+Produced property types:
 
 **property** - non-list property  
-**arr_property** - item of json array property  
-**arr_start** - start of json array notification, contains property name  
-**arr_end** - end of of json array notification, contains property name  
-
-### Limitations
-binding for properties and array contents only  
-supported java types for arrays: ```java.util.List```
+**arr_property** - element of json array 
+**arr_start** - start of array, contains property name  
+**arr_end** - end of of array, contains property name  
 
 ### How to use
 
