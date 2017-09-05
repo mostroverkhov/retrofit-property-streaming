@@ -2,7 +2,7 @@ Streaming [retrofit](https://square.github.io/retrofit/) json response as sequen
 
 Produced property types:
 
-**property** - non-list property  
+**property** - non-array property  
 **arr_property** - element of json array  
 **arr_start** - start of array, contains property name  
 **arr_end** - end of of array, contains property name  
